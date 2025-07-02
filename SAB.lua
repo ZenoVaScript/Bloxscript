@@ -1,5 +1,5 @@
--- Steal a Brainrot Speed Boost (GUI + WalkSpeed Only)
--- By [YourName] - Simple & Effective
+-- Steal a Brainrot Speed Boost (Fixed Version)
+-- By [YourName] - Guaranteed Working WalkSpeed Mod
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -31,25 +31,35 @@ StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Parent = Frame
 
--- Speed Variables
+-- Speed Settings
 local DefaultSpeed = 16
-local BoostSpeed = 50  -- Adjust this value (50 = 3x faster)
+local BoostSpeed = 50  -- Adjust this value as needed
 local IsBoosting = false
 
--- Boost Function (WalkSpeed Only)
-local function ToggleBoost(active)
-    if active then
-        IsBoosting = true
-        Humanoid.WalkSpeed = BoostSpeed
-        StatusLabel.Text = "Status: BOOSTING"
-    else
-        IsBoosting = false
-        Humanoid.WalkSpeed = DefaultSpeed
-        StatusLabel.Text = "Status: Disabled"
+-- Function to ensure WalkSpeed stays modified
+local function MaintainSpeed()
+    while IsBoosting do
+        if Humanoid and Humanoid.WalkSpeed ~= BoostSpeed then
+            Humanoid.WalkSpeed = BoostSpeed
+        end
+        wait(0.1)
     end
 end
 
--- Button Logic
+-- Boost Toggle
+local function ToggleBoost(active)
+    IsBoosting = active
+    if active then
+        Humanoid.WalkSpeed = BoostSpeed
+        StatusLabel.Text = "Status: BOOSTING"
+        spawn(MaintainSpeed)  -- Start maintenance loop
+    else
+        Humanoid.WalkSpeed = DefaultSpeed
+        StatusLabel.Text = "Status: Ready"
+    end
+end
+
+-- Button Connections
 BoostButton.MouseButton1Down:Connect(function()
     ToggleBoost(true)
 end)
@@ -58,12 +68,26 @@ BoostButton.MouseButton1Up:Connect(function()
     ToggleBoost(false)
 end)
 
--- Auto-Reset if character respawns
-LocalPlayer.CharacterAdded:Connect(function(newChar)
+-- Handle character changes/respawns
+local function SetupCharacter(newChar)
     Character = newChar
     Humanoid = newChar:WaitForChild("Humanoid")
     Humanoid.WalkSpeed = DefaultSpeed
     StatusLabel.Text = "Status: Ready"
-end)
+    
+    -- Reapply boost if active during respawn
+    if IsBoosting then
+        wait(0.5)  -- Small delay to ensure humanoid is ready
+        Humanoid.WalkSpeed = BoostSpeed
+        spawn(MaintainSpeed)
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(SetupCharacter)
+
+-- Initial setup
+if Character then
+    SetupCharacter(Character)
+end
 
 StatusLabel.Text = "Status: Loaded!"
