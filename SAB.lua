@@ -1,20 +1,10 @@
--- Steal a Brainrot Hack (GUI + Flight + Speed + Anti-Cheat Bypass)
--- By [YourName] - Use at your own risk!
+-- Steal a Brainrot Speed Boost (GUI + WalkSpeed Only)
+-- By [YourName] - Simple & Effective
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
-local RootPart = Character:WaitForChild("HumanoidRootPart")
-
--- Anti-Cheat Bypass (Simulate "legit" movement)
-local function SafeFlight()
-    local fakeVelocity = Instance.new("BodyVelocity")
-    fakeVelocity.MaxForce = Vector3.new(0, 0, 0)
-    fakeVelocity.Velocity = Vector3.new(0, 0, 0)
-    fakeVelocity.Parent = RootPart
-    return fakeVelocity
-end
 
 -- GUI Setup
 local ScreenGui = Instance.new("ScreenGui")
@@ -41,37 +31,20 @@ StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Parent = Frame
 
--- Flight & Speed Variables
-local IsFlying = false
-local FlightVelocity = SafeFlight()
-local BoostStartTime = 0
-local MaxFlightTime = 30 -- Seconds before auto-disable (avoids detection)
+-- Speed Variables
+local DefaultSpeed = 16
+local BoostSpeed = 50  -- Adjust this value (50 = 3x faster)
+local IsBoosting = false
 
--- Boost Function (Flight + Speed)
+-- Boost Function (WalkSpeed Only)
 local function ToggleBoost(active)
     if active then
-        IsFlying = true
-        BoostStartTime = tick()
-        
-        -- Speed Boost (x3 WalkSpeed)
-        Humanoid.WalkSpeed = 50
-        
-        -- Flight Hack (Bypass Anti-Cheat)
-        FlightVelocity.MaxForce = Vector3.new(0, math.huge, 0)
-        FlightVelocity.Velocity = Vector3.new(0, 0, 0)
-        
-        -- Simulate "natural" ascent (avoids instant flag)
-        for i = 1, 20 do
-            FlightVelocity.Velocity = Vector3.new(0, i, 0)
-            wait(0.05)
-        end
-        
-        StatusLabel.Text = "Status: FLYING"
+        IsBoosting = true
+        Humanoid.WalkSpeed = BoostSpeed
+        StatusLabel.Text = "Status: BOOSTING"
     else
-        -- Reset Everything
-        IsFlying = false
-        Humanoid.WalkSpeed = 16
-        FlightVelocity.MaxForce = Vector3.new(0, 0, 0)
+        IsBoosting = false
+        Humanoid.WalkSpeed = DefaultSpeed
         StatusLabel.Text = "Status: Disabled"
     end
 end
@@ -85,22 +58,12 @@ BoostButton.MouseButton1Up:Connect(function()
     ToggleBoost(false)
 end)
 
--- Anti-Cheat Protection
-spawn(function()
-    while wait(1) do
-        if IsFlying and (tick() - BoostStartTime > MaxFlightTime) then
-            ToggleBoost(false)
-            StatusLabel.Text = "Status: Cooldown (Anti-Cheat)"
-            wait(5)
-        end
-    end
-end)
-
--- If anti-cheat teleports you back, this re-enables flight
-Humanoid.StateChanged:Connect(function(_, newState)
-    if newState == Enum.HumanoidStateType.Freefall and IsFlying then
-        ToggleBoost(true)
-    end
+-- Auto-Reset if character respawns
+LocalPlayer.CharacterAdded:Connect(function(newChar)
+    Character = newChar
+    Humanoid = newChar:WaitForChild("Humanoid")
+    Humanoid.WalkSpeed = DefaultSpeed
+    StatusLabel.Text = "Status: Ready"
 end)
 
 StatusLabel.Text = "Status: Loaded!"
