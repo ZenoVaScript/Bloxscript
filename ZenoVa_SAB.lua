@@ -241,259 +241,466 @@ local function serverHop()
 end
 
 ---------------------------------------------------
---[[                       ]]--
+--[[               LUXURY GUI                 ]]--
 ---------------------------------------------------
 
-local function applyRainbowEffect(textLabel)
-    local hue = 0
-    RunService.Heartbeat:Connect(function()
-        hue = (hue + 0.01) % 1
-        textLabel.TextColor3 = Color3.fromHSV(hue, 1, 1)
-    end)
+local function applyGradient(frame)
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 90
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 30)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 40, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
+    })
+    gradient.Parent = frame
 end
 
--- NEW: Teleport Pop-Up GUI
-local function createTeleportGUI()
-    teleportGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-    teleportGui.Name = "TeleportControl"
+local function createLuxuryButton(parent, text, callback)
+    local button = Instance.new("TextButton")
+    button.Name = "LuxuryButton"
+    button.Text = text
+    button.Font = Enum.Font.GothamSemibold
+    button.TextSize = 14
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    button.AutoButtonColor = false
+    button.Size = UDim2.new(1, -10, 0, 36)
+    button.Position = UDim2.new(0, 5, 0, 0)
+    button.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(80, 80, 100)
+    stroke.Thickness = 1
+    stroke.Parent = button
+    
+    local hoverGradient = Instance.new("UIGradient")
+    hoverGradient.Rotation = 90
+    hoverGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 60, 80))
+    })
+    hoverGradient.Enabled = false
+    hoverGradient.Parent = button
+    
+    button.MouseEnter:Connect(function()
+        hoverGradient.Enabled = true
+        TweenService:Create(button, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(100, 150, 255)}):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        hoverGradient.Enabled = false
+        TweenService:Create(button, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(80, 80, 100)}):Play()
+    end)
+    
+    button.MouseButton1Down:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(0.95, -10, 0, 34)}):Play()
+    end)
+    
+    button.MouseButton1Up:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 36)}):Play()
+        callback()
+    end)
+    
+    return button
+end
+
+local function createLuxuryToggle(parent, text, defaultState, callback)
+    local container = Instance.new("Frame")
+    container.Name = "ToggleContainer"
+    container.BackgroundTransparency = 1
+    container.Size = UDim2.new(1, -10, 0, 36)
+    container.Position = UDim2.new(0, 5, 0, 0)
+    container.Parent = parent
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "ToggleLabel"
+    label.Text = text
+    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 14
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.Parent = container
+    
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Name = "ToggleFrame"
+    toggleFrame.Size = UDim2.new(0, 50, 0, 24)
+    toggleFrame.Position = UDim2.new(1, -60, 0.5, -12)
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    toggleFrame.Parent = container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = toggleFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(80, 80, 100)
+    stroke.Thickness = 1
+    stroke.Parent = toggleFrame
+    
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Text = ""
+    toggleButton.Size = UDim2.new(0, 20, 0, 20)
+    toggleButton.Position = UDim2.new(0, 2, 0.5, -10)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+    toggleButton.Parent = toggleFrame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = toggleButton
+    
+    local state = defaultState or false
+    
+    local function updateToggle()
+        if state then
+            TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+                Position = UDim2.new(1, -22, 0.5, -10),
+                BackgroundColor3 = Color3.fromRGB(100, 255, 150)
+            }):Play()
+            TweenService:Create(toggleFrame, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(30, 80, 50)
+            }):Play()
+        else
+            TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+                Position = UDim2.new(0, 2, 0.5, -10),
+                BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+            }):Play()
+            TweenService:Create(toggleFrame, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            }):Play()
+        end
+        callback(state)
+    end
+    
+    toggleButton.MouseButton1Click:Connect(function()
+        state = not state
+        updateToggle()
+    end)
+    
+    -- Initialize state
+    updateToggle()
+    
+    return {
+        SetState = function(newState)
+            state = newState
+            updateToggle()
+        end,
+        GetState = function()
+            return state
+        end
+    }
+end
+
+local function createLuxuryCategory(parent, title)
+    local category = Instance.new("Frame")
+    category.Name = "Category"
+    category.BackgroundTransparency = 1
+    category.Size = UDim2.new(1, -10, 0, 42)
+    category.Position = UDim2.new(0, 5, 0, 0)
+    category.Parent = parent
+    
+    local labelContainer = Instance.new("Frame")
+    labelContainer.Name = "LabelContainer"
+    labelContainer.Size = UDim2.new(1, 0, 0, 24)
+    labelContainer.Position = UDim2.new(0, 0, 0, 10)
+    labelContainer.BackgroundTransparency = 1
+    labelContainer.Parent = category
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 90
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 50, 70)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+    })
+    gradient.Parent = labelContainer
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = labelContainer
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(80, 80, 120)
+    stroke.Thickness = 1
+    stroke.Parent = labelContainer
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "CategoryLabel"
+    label.Text = string.upper(title)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.TextColor3 = Color3.fromRGB(180, 180, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.Parent = labelContainer
+    
+    return category
+end
+
+local function createLuxuryTeleportGUI()
+    teleportGui = Instance.new("ScreenGui")
+    teleportGui.Name = "LuxuryTeleportControl"
     teleportGui.ResetOnSpawn = false
     teleportGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    teleportGui.Enabled = false -- Start hidden
+    teleportGui.Enabled = false
+    teleportGui.Parent = player:WaitForChild("PlayerGui")
 
-    local mainFrame = Instance.new("Frame", teleportGui)
-    mainFrame.Size = UDim2.new(0, 120, 0, 80) -- Smaller frame
-    mainFrame.Position = UDim2.new(0.5, -60, 0.5, -40) -- Centered
-    mainFrame.BackgroundColor3 = Color3.fromRGB(23, 24, 28)
-    mainFrame.BackgroundTransparency = 0.3
-    mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)
-    mainFrame.BorderSizePixel = 1
-    mainFrame.Active = true
-    mainFrame.Draggable = true
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 180, 0, 120)
+    mainFrame.Position = UDim2.new(0.5, -90, 0.5, -60)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    mainFrame.Parent = teleportGui
     
-    local mainCorner = Instance.new("UICorner", mainFrame)
-    mainCorner.CornerRadius = UDim.new(0, 4)
-
-    local titleBar = Instance.new("TextLabel", mainFrame)
-    titleBar.Size = UDim2.new(1, 0, 0, 25) -- Smaller title bar
-    titleBar.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
-    titleBar.BackgroundTransparency = 0
-    titleBar.Text = "TELEPORTATION"
-    titleBar.Font = Enum.Font.SourceSansBold
-    titleBar.TextSize = 16 -- Smaller text
-    titleBar.TextColor3 = Color3.new(1, 1, 1)
-    titleBar.TextXAlignment = Enum.TextXAlignment.Center
-    applyRainbowEffect(titleBar)
+    applyGradient(mainFrame)
     
-    local titleCorner = Instance.new("UICorner", titleBar)
-    titleCorner.CornerRadius = UDim.new(0, 4)
-
-    local teleportButton = Instance.new("TextButton", mainFrame)
-    teleportButton.Size = UDim2.new(0.8, 0, 0, 30) -- Adjusted size to be 80% width
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = mainFrame
     
-    -- This line is corrected to properly center the button horizontally.
-    teleportButton.Position = UDim2.new(0.1, 0, 0, titleBar.Size.Y.Offset + (mainFrame.Size.Y.Offset - titleBar.Size.Y.Offset - teleportButton.Size.Y.Offset) / 2)
+    local stroke = Instance.new("UIStroke")
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(80, 80, 120)
+    stroke.Thickness = 2
+    stroke.Parent = mainFrame
     
-    teleportButton.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    teleportButton.TextColor3 = Color3.new(1, 1, 1)
-    teleportButton.Font = Enum.Font.SourceSansSemibold
-    teleportButton.TextSize = 14 -- Smaller text
-    teleportButton.Text = "SKY"
-    local btnCorner = Instance.new("UICorner", teleportButton)
-    btnCorner.CornerRadius = UDim.new(0, 4)
-    applyRainbowEffect(teleportButton)
-
-    teleportButton.MouseButton1Click:Connect(function()
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 32)
+    titleBar.BackgroundTransparency = 1
+    titleBar.Parent = mainFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Text = "TELEPORT CONTROL"
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 16
+    titleLabel.TextColor3 = Color3.fromRGB(180, 180, 255)
+    titleLabel.Size = UDim2.new(1, 0, 1, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = titleBar
+    
+    local closeButton = Instance.new("TextButton")
+    closeButton.Text = "×"
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 20
+    closeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+    closeButton.Size = UDim2.new(0, 24, 0, 24)
+    closeButton.Position = UDim2.new(1, -28, 0.5, -12)
+    closeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    closeButton.Parent = titleBar
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 4)
+    closeCorner.Parent = closeButton
+    
+    closeButton.MouseButton1Click:Connect(function()
+        teleportGui.Enabled = false
+    end)
+    
+    local teleportButton = createLuxuryButton(mainFrame, "TELEPORT TO SKY", function()
         isTeleporting = not isTeleporting
         if isTeleporting then
             teleportToSky()
-            teleportButton.Text = "GROUND" -- Change text to STOP when active
-            
+            teleportButton.Text = "TELEPORT TO GROUND"
         else
             teleportToGround()
-            teleportButton.Text = "SKY" -- Change text back to START when inactive
-            
+            teleportButton.Text = "TELEPORT TO SKY"
         end
     end)
+    teleportButton.Position = UDim2.new(0, 10, 0, 40)
 end
 
-local function createV1Menu()
+local function createLuxuryMainGUI()
     if gui then gui:Destroy() end
 
-    gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-    gui.Name = "ServerV1Menu"
+    gui = Instance.new("ScreenGui")
+    gui.Name = "LuxuryServerV1Menu"
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = player:WaitForChild("PlayerGui")
 
-    local mainFrame = Instance.new("Frame", gui)
-    local originalSize = UDim2.new(0, 160, 0, 280) -- Smaller original size
-    mainFrame.Size = originalSize
-    mainFrame.Position = UDim2.new(0.05, 0, 0.5, -140) -- Adjusted position
-    mainFrame.BackgroundColor3 = Color3.fromRGB(23, 24, 28)
-    mainFrame.BackgroundTransparency = 0.3
-    mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)
-    mainFrame.BorderSizePixel = 1
-    mainFrame.Active = true
-    mainFrame.Draggable = true
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 240, 0, 400)
+    mainFrame.Position = UDim2.new(0.05, 0, 0.5, -200)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    mainFrame.Parent = gui
     
-    local mainCorner = Instance.new("UICorner", mainFrame)
-    mainCorner.CornerRadius = UDim.new(0, 4)
-
-    local titleBar = Instance.new("TextLabel", mainFrame)
-    titleBar.Size = UDim2.new(1, 0, 0, 30) -- Smaller height for title
-    titleBar.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
-    titleBar.BackgroundTransparency = 0
-    titleBar.Text = "ZenoVa SAB"
-    titleBar.Font = Enum.Font.SourceSansBold
-    titleBar.TextSize = 20 -- Slightly smaller title
-    titleBar.TextColor3 = Color3.new(1, 1, 1)
-    titleBar.TextXAlignment = Enum.TextXAlignment.Center
+    applyGradient(mainFrame)
     
-    local titleCorner = Instance.new("UICorner", titleBar)
-    titleCorner.CornerRadius = UDim.new(0, 4)
-
-    local contentFrame = Instance.new("ScrollingFrame", mainFrame)
-    contentFrame.Size = UDim2.new(1, -10, 1, -35) -- Adjusted size
-    contentFrame.Position = UDim2.new(0, 5, 0, 30) -- Adjusted position
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = mainFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(80, 80, 120)
+    stroke.Thickness = 2
+    stroke.Parent = mainFrame
+    
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 40)
+    titleBar.BackgroundTransparency = 1
+    titleBar.Parent = mainFrame
+    
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Text = "ZENOVA SAB | V1"
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 18
+    titleLabel.TextColor3 = Color3.fromRGB(180, 180, 255)
+    titleLabel.Size = UDim2.new(1, -40, 1, 0)
+    titleLabel.Position = UDim2.new(0, 15, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.Parent = titleBar
+    
+    local minimizeButton = Instance.new("TextButton")
+    minimizeButton.Text = "─"
+    minimizeButton.Font = Enum.Font.GothamBold
+    minimizeButton.TextSize = 20
+    minimizeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+    minimizeButton.Size = UDim2.new(0, 24, 0, 24)
+    minimizeButton.Position = UDim2.new(1, -60, 0.5, -12)
+    minimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    minimizeButton.Parent = titleBar
+    
+    local minimizeCorner = Instance.new("UICorner")
+    minimizeCorner.CornerRadius = UDim.new(0, 4)
+    minimizeCorner.Parent = minimizeButton
+    
+    local closeButton = Instance.new("TextButton")
+    closeButton.Text = "×"
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 20
+    closeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+    closeButton.Size = UDim2.new(0, 24, 0, 24)
+    closeButton.Position = UDim2.new(1, -28, 0.5, -12)
+    closeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    closeButton.Parent = titleBar
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 4)
+    closeCorner.Parent = closeButton
+    
+    local contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Size = UDim2.new(1, -10, 1, -50)
+    contentFrame.Position = UDim2.new(0, 5, 0, 45)
     contentFrame.BackgroundTransparency = 1
     contentFrame.BorderSizePixel = 0
-    contentFrame.ScrollBarThickness = 3
+    contentFrame.ScrollBarThickness = 4
+    contentFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 120)
     contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    contentFrame.Parent = mainFrame
     
-    local listLayout = Instance.new("UIListLayout", contentFrame)
-    listLayout.Padding = UDim.new(0, 5) -- Reduced padding
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 8)
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-    -- MINIMIZE BUTTON
-    local minimized = false
-    local minimizeButton = Instance.new("TextButton", titleBar)
-    minimizeButton.Size = UDim2.new(0, 18, 0, 18) -- Smaller minimize button
-    minimizeButton.Position = UDim2.new(1, -22, 0.5, -9) -- Adjusted position
-    minimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    minimizeButton.Text = "–"
-    minimizeButton.Font = Enum.Font.SourceSansBold
-    minimizeButton.TextSize = 14 -- Smaller text
-    minimizeButton.TextColor3 = Color3.new(1,1,1)
-    local minimizeCorner = Instance.new("UICorner", minimizeButton)
-    minimizeCorner.CornerRadius = UDim.new(0, 3)
+    listLayout.Parent = contentFrame
     
+    -- Minimize functionality
+    local minimized = false
     minimizeButton.MouseButton1Click:Connect(function()
         minimized = not minimized
         contentFrame.Visible = not minimized
-        minimizeButton.Text = minimized and "+" or "–"
+        minimizeButton.Text = minimized and "+" or "─"
         
-        local targetSize = minimized and UDim2.new(0, 160, 0, 30) or originalSize -- Adjusted for new title bar height
+        local targetSize = minimized and UDim2.new(0, 240, 0, 40) or UDim2.new(0, 240, 0, 400)
         TweenService:Create(mainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = targetSize}):Play()
     end)
-
-    applyRainbowEffect(titleBar)
     
-    local currentLayoutOrder = 1
-    local function createCategory(title)
-        local categoryLabel = Instance.new("TextLabel", contentFrame)
-        categoryLabel.Size = UDim2.new(1, 0, 0, 20) -- Smaller category label
-        categoryLabel.Text = title
-        categoryLabel.Font = Enum.Font.SourceSansBold
-        categoryLabel.TextSize = 15 -- Smaller text
-        categoryLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        categoryLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        categoryLabel.BackgroundTransparency = 0.5
-        categoryLabel.TextXAlignment = Enum.TextXAlignment.Center
-        categoryLabel.LayoutOrder = currentLayoutOrder
-        currentLayoutOrder = currentLayoutOrder + 1
-        
-        local categoryCorner = Instance.new("UICorner", categoryLabel)
-        categoryCorner.CornerRadius = UDim.new(0, 4)
-
-        applyRainbowEffect(categoryLabel)
-        return categoryLabel
-    end
-
-    local function createToggleButton(name, parent, callback)
-        local container = Instance.new("Frame", parent)
-        container.Size = UDim2.new(1, 0, 0, 25) -- Smaller container for toggle
-        container.BackgroundTransparency = 1
-        container.LayoutOrder = currentLayoutOrder
-        currentLayoutOrder = currentLayoutOrder + 1
-
-        local label = Instance.new("TextLabel", container)
-        label.Size = UDim2.new(0.7, 0, 1, 0)
-        label.Text = name
-        label.Font = Enum.Font.SourceSansSemibold
-        label.TextSize = 14 -- Smaller text
-        label.TextColor3 = Color3.new(1, 1, 1)
-        label.BackgroundTransparency = 1
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        applyRainbowEffect(label)
-
-        local switch = Instance.new("TextButton", container)
-        switch.Size = UDim2.new(0, 35, 0, 18) -- Smaller switch
-        switch.Position = UDim2.new(1, -40, 0.5, -9) -- Adjusted position
-        switch.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-        switch.Text = ""
-        local switchCorner = Instance.new("UICorner", switch)
-        switchCorner.CornerRadius = UDim.new(0.5, 0)
-
-        local nub = Instance.new("Frame", switch)
-        nub.Size = UDim2.new(0, 14, 0, 14) -- Smaller nub
-        nub.Position = UDim2.new(0, 2, 0.5, -7) -- Adjusted position
-        nub.BackgroundColor3 = Color3.new(1, 1, 1)
-        local nubCorner = Instance.new("UICorner", nub)
-        nubCorner.CornerRadius = UDim.new(0.5, 0)
-
-        local state = false
-        switch.MouseButton1Click:Connect(function()
-            state = not state
-            callback(state)
-            local nubPos = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7) -- Adjusted nub position
-            local switchColor = state and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(70, 70, 70)
-            TweenService:Create(nub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Position = nubPos }):Play()
-            TweenService:Create(switch, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { BackgroundColor3 = switchColor }):Play()
-        end)
-    end
+    closeButton.MouseButton1Click:Connect(function()
+        gui:Destroy()
+    end)
     
-    local function createOneShotButton(name, parent, callback)
-        local btn = Instance.new("TextButton", parent)
-        btn.Size = UDim2.new(1, 0, 0, 25) -- Smaller button
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-        btn.BackgroundTransparency = 1
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.Font = Enum.Font.SourceSansSemibold
-        btn.TextSize = 14 -- Smaller text
-        btn.Text = name
-        btn.LayoutOrder = currentLayoutOrder
-        currentLayoutOrder = currentLayoutOrder + 1
-        local btnCorner = Instance.new("UICorner", btn)
-        btnCorner.CornerRadius = UDim.new(0, 4)
-        applyRainbowEffect(btn)
-
-        btn.MouseButton1Click:Connect(callback)
-    end
-    
-    -- CREATE UI ELEMENTS
+    -- Create categories and controls
     -- Player Settings
-    createCategory("PLAYER SETTINGS")
-    createToggleButton("Godmode", contentFrame, setGodMode)
-    createToggleButton("Aimbot", contentFrame, toggleAimbot)
-    createToggleButton("Jump Boost", contentFrame, function(state) boostJumpEnabled = state end)
-
+    local playerCategory = createLuxuryCategory(contentFrame, "Player Settings")
+    createLuxuryToggle(playerCategory, "God Mode", false, setGodMode)
+    createLuxuryToggle(playerCategory, "Aimbot", false, toggleAimbot)
+    createLuxuryToggle(playerCategory, "Jump Boost", false, function(state) boostJumpEnabled = state end)
+    
     -- Visual Settings
-    createCategory("VISUALS SETTINGS")
-    createToggleButton("ESP", contentFrame, toggleESP)
-    createToggleButton("Invisible", contentFrame, setInvisible)
-
+    local visualCategory = createLuxuryCategory(contentFrame, "Visual Settings")
+    createLuxuryToggle(visualCategory, "ESP", false, toggleESP)
+    createLuxuryToggle(visualCategory, "Invisible", false, setInvisible)
+    
     -- Steal Settings
-    createCategory("STEAL SETTING")
-    createOneShotButton("Start Steal", contentFrame, function()
+    local stealCategory = createLuxuryCategory(contentFrame, "Steal Settings")
+    createLuxuryButton(stealCategory, "Open Teleport Control", function()
         if teleportGui then
             teleportGui.Enabled = not teleportGui.Enabled
         end
     end)
     
     -- World Settings
-    createCategory("WORLD SETTINGS")
-    createOneShotButton("Change Server", contentFrame, serverHop)
+    local worldCategory = createLuxuryCategory(contentFrame, "World Settings")
+    createLuxuryButton(worldCategory, "Server Hop", serverHop)
+    
+    -- Add some decorative elements
+    local footer = Instance.new("Frame")
+    footer.Size = UDim2.new(1, 0, 0, 20)
+    footer.BackgroundTransparency = 1
+    footer.Parent = contentFrame
+    
+    local footerText = Instance.new("TextLabel")
+    footerText.Text = "ZENOVA SAB | V1"
+    footerText.Font = Enum.Font.GothamSemibold
+    footerText.TextSize = 12
+    footerText.TextColor3 = Color3.fromRGB(120, 120, 150)
+    footerText.Size = UDim2.new(1, 0, 1, 0)
+    footerText.BackgroundTransparency = 1
+    footerText.TextXAlignment = Enum.TextXAlignment.Center
+    footerText.Parent = footer
+    
+    -- Make the window draggable
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+    
+    local function updateInput(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    titleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            updateInput(input)
+        end
+    end)
 end
 
--- Initialize Menus
-createTeleportGUI()
-createV1Menu()
+-- Initialize the luxury GUIs
+createLuxuryTeleportGUI()
+createLuxuryMainGUI()
