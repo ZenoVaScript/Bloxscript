@@ -368,7 +368,7 @@ local function createV1Menu()
     titleBar.Size = UDim2.new(1, 0, 0, 35)
     titleBar.BackgroundColor3 = colors.header
     titleBar.BackgroundTransparency = 0
-    titleBar.Text = "ZenoVa HUB | Steal A Brainrot"
+    titleBar.Text = "ZenoVa HUB | SAB"
     titleBar.Font = Enum.Font.GothamBold
     titleBar.TextSize = 16
     titleBar.TextColor3 = colors.text
