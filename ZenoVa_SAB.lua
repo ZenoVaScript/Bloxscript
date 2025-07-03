@@ -36,6 +36,19 @@ local boostJumpEnabled = false
 local teleportGui
 local isTeleporting = false
 
+-- COLOR SCHEME
+local colors = {
+    background = Color3.fromRGB(30, 30, 40),
+    header = Color3.fromRGB(25, 25, 35),
+    accent = Color3.fromRGB(0, 150, 255),
+    text = Color3.fromRGB(240, 240, 240),
+    toggleOff = Color3.fromRGB(70, 70, 80),
+    toggleOn = Color3.fromRGB(0, 200, 100),
+    button = Color3.fromRGB(50, 50, 60),
+    buttonHover = Color3.fromRGB(60, 60, 70),
+    category = Color3.fromRGB(40, 40, 50)
+}
+
 ---------------------------------------------------
 --[[           FUNCTION DEFINITIONS            ]]--
 ---------------------------------------------------
@@ -180,7 +193,7 @@ local function toggleESP(state)
             if not character or character:FindFirstChild("ServerV1ESP") then return end
             local h = Instance.new("Highlight")
             h.Name = "ServerV1ESP"
-            h.FillColor = Color3.fromRGB(255, 50, 50)
+            h.FillColor = colors.accent
             h.OutlineColor = Color3.new(1, 1, 1)
             h.FillTransparency = 0.5
             h.OutlineTransparency = 0
@@ -241,77 +254,88 @@ local function serverHop()
 end
 
 ---------------------------------------------------
---[[                       ]]--
+--[[           GUI CREATION FUNCTIONS          ]]--
 ---------------------------------------------------
 
-local function applyRainbowEffect(textLabel)
-    local hue = 0
-    RunService.Heartbeat:Connect(function()
-        hue = (hue + 0.01) % 1
-        textLabel.TextColor3 = Color3.fromHSV(hue, 1, 1)
+local function createButtonHoverEffect(button)
+    local originalColor = button.BackgroundColor3
+    local hoverColor = colors.buttonHover
+    
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = hoverColor}):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = originalColor}):Play()
     end)
 end
 
--- NEW: Teleport Pop-Up GUI
 local function createTeleportGUI()
     teleportGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
     teleportGui.Name = "TeleportControl"
     teleportGui.ResetOnSpawn = false
     teleportGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    teleportGui.Enabled = false -- Start hidden
+    teleportGui.Enabled = false
 
     local mainFrame = Instance.new("Frame", teleportGui)
-    mainFrame.Size = UDim2.new(0, 120, 0, 80) -- Smaller frame
-    mainFrame.Position = UDim2.new(0.5, -60, 0.5, -40) -- Centered
-    mainFrame.BackgroundColor3 = Color3.fromRGB(23, 24, 28)
-    mainFrame.BackgroundTransparency = 0.3
-    mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)
-    mainFrame.BorderSizePixel = 1
+    mainFrame.Size = UDim2.new(0, 150, 0, 100)
+    mainFrame.Position = UDim2.new(0.5, -75, 0.5, -50)
+    mainFrame.BackgroundColor3 = colors.background
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
     mainFrame.Active = true
     mainFrame.Draggable = true
     
     local mainCorner = Instance.new("UICorner", mainFrame)
-    mainCorner.CornerRadius = UDim.new(0, 4)
+    mainCorner.CornerRadius = UDim.new(0, 6)
+    
+    local mainStroke = Instance.new("UIStroke", mainFrame)
+    mainStroke.Color = colors.accent
+    mainStroke.Thickness = 1
+    mainStroke.Transparency = 0.5
 
     local titleBar = Instance.new("TextLabel", mainFrame)
-    titleBar.Size = UDim2.new(1, 0, 0, 25) -- Smaller title bar
-    titleBar.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    titleBar.BackgroundColor3 = colors.header
     titleBar.BackgroundTransparency = 0
     titleBar.Text = "TELEPORTATION"
-    titleBar.Font = Enum.Font.SourceSansBold
-    titleBar.TextSize = 16 -- Smaller text
-    titleBar.TextColor3 = Color3.new(1, 1, 1)
+    titleBar.Font = Enum.Font.GothamBold
+    titleBar.TextSize = 14
+    titleBar.TextColor3 = colors.text
     titleBar.TextXAlignment = Enum.TextXAlignment.Center
-    applyRainbowEffect(titleBar)
     
     local titleCorner = Instance.new("UICorner", titleBar)
-    titleCorner.CornerRadius = UDim.new(0, 4)
+    titleCorner.CornerRadius = UDim.new(0, 6)
 
     local teleportButton = Instance.new("TextButton", mainFrame)
-    teleportButton.Size = UDim2.new(0.8, 0, 0, 30) -- Adjusted size to be 80% width
-    
-    -- This line is corrected to properly center the button horizontally.
-    teleportButton.Position = UDim2.new(0.1, 0, 0, titleBar.Size.Y.Offset + (mainFrame.Size.Y.Offset - titleBar.Size.Y.Offset - teleportButton.Size.Y.Offset) / 2)
-    
-    teleportButton.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    teleportButton.TextColor3 = Color3.new(1, 1, 1)
-    teleportButton.Font = Enum.Font.SourceSansSemibold
-    teleportButton.TextSize = 14 -- Smaller text
+    teleportButton.Size = UDim2.new(0.8, 0, 0, 35)
+    teleportButton.Position = UDim2.new(0.1, 0, 0.5, -17.5)
+    teleportButton.BackgroundColor3 = colors.button
+    teleportButton.TextColor3 = colors.text
+    teleportButton.Font = Enum.Font.GothamSemibold
+    teleportButton.TextSize = 14
     teleportButton.Text = "SKY"
+    
     local btnCorner = Instance.new("UICorner", teleportButton)
     btnCorner.CornerRadius = UDim.new(0, 4)
-    applyRainbowEffect(teleportButton)
+    
+    local btnStroke = Instance.new("UIStroke", teleportButton)
+    btnStroke.Color = colors.accent
+    btnStroke.Thickness = 1
+    btnStroke.Transparency = 0.7
+    
+    createButtonHoverEffect(teleportButton)
 
     teleportButton.MouseButton1Click:Connect(function()
         isTeleporting = not isTeleporting
         if isTeleporting then
             teleportToSky()
-            teleportButton.Text = "GROUND" -- Change text to STOP when active
-            
+            teleportButton.Text = "GROUND"
+            TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = colors.toggleOn}):Play()
         else
             teleportToGround()
-            teleportButton.Text = "SKY" -- Change text back to START when inactive
-            
+            teleportButton.Text = "SKY"
+            TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = colors.button}):Play()
         end
     end)
 end
@@ -325,92 +349,100 @@ local function createV1Menu()
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local mainFrame = Instance.new("Frame", gui)
-    local originalSize = UDim2.new(0, 160, 0, 280) -- Smaller original size
+    local originalSize = UDim2.new(0, 200, 0, 320)
     mainFrame.Size = originalSize
-    mainFrame.Position = UDim2.new(0.05, 0, 0.5, -140) -- Adjusted position
-    mainFrame.BackgroundColor3 = Color3.fromRGB(23, 24, 28)
-    mainFrame.BackgroundTransparency = 0.3
-    mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)
-    mainFrame.BorderSizePixel = 1
+    mainFrame.Position = UDim2.new(0.05, 0, 0.5, -160)
+    mainFrame.BackgroundColor3 = colors.background
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
     mainFrame.Active = true
     mainFrame.Draggable = true
     
     local mainCorner = Instance.new("UICorner", mainFrame)
-    mainCorner.CornerRadius = UDim.new(0, 4)
+    mainCorner.CornerRadius = UDim.new(0, 8)
+    
+    local mainStroke = Instance.new("UIStroke", mainFrame)
+    mainStroke.Color = colors.accent
+    mainStroke.Thickness = 1
+    mainStroke.Transparency = 0.5
 
     local titleBar = Instance.new("TextLabel", mainFrame)
-    titleBar.Size = UDim2.new(1, 0, 0, 30) -- Smaller height for title
-    titleBar.BackgroundColor3 = Color3.fromRGB(15, 16, 20)
+    titleBar.Size = UDim2.new(1, 0, 0, 35)
+    titleBar.BackgroundColor3 = colors.header
     titleBar.BackgroundTransparency = 0
-    titleBar.Text = "ZenoVa SAB"
-    titleBar.Font = Enum.Font.SourceSansBold
-    titleBar.TextSize = 20 -- Slightly smaller title
-    titleBar.TextColor3 = Color3.new(1, 1, 1)
+    titleBar.Text = "SERVER V1"
+    titleBar.Font = Enum.Font.GothamBold
+    titleBar.TextSize = 16
+    titleBar.TextColor3 = colors.text
     titleBar.TextXAlignment = Enum.TextXAlignment.Center
     
     local titleCorner = Instance.new("UICorner", titleBar)
-    titleCorner.CornerRadius = UDim.new(0, 4)
+    titleCorner.CornerRadius = UDim.new(0, 8)
 
     local contentFrame = Instance.new("ScrollingFrame", mainFrame)
-    contentFrame.Size = UDim2.new(1, -10, 1, -35) -- Adjusted size
-    contentFrame.Position = UDim2.new(0, 5, 0, 30) -- Adjusted position
+    contentFrame.Size = UDim2.new(1, -10, 1, -40)
+    contentFrame.Position = UDim2.new(0, 5, 0, 35)
     contentFrame.BackgroundTransparency = 1
     contentFrame.BorderSizePixel = 0
-    contentFrame.ScrollBarThickness = 3
+    contentFrame.ScrollBarThickness = 4
+    contentFrame.ScrollBarImageColor3 = colors.accent
     contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     
     local listLayout = Instance.new("UIListLayout", contentFrame)
-    listLayout.Padding = UDim.new(0, 5) -- Reduced padding
+    listLayout.Padding = UDim.new(0, 8)
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
     -- MINIMIZE BUTTON
     local minimized = false
     local minimizeButton = Instance.new("TextButton", titleBar)
-    minimizeButton.Size = UDim2.new(0, 18, 0, 18) -- Smaller minimize button
-    minimizeButton.Position = UDim2.new(1, -22, 0.5, -9) -- Adjusted position
-    minimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    minimizeButton.Size = UDim2.new(0, 25, 0, 25)
+    minimizeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
+    minimizeButton.BackgroundColor3 = colors.button
     minimizeButton.Text = "–"
-    minimizeButton.Font = Enum.Font.SourceSansBold
-    minimizeButton.TextSize = 14 -- Smaller text
-    minimizeButton.TextColor3 = Color3.new(1,1,1)
+    minimizeButton.Font = Enum.Font.GothamBold
+    minimizeButton.TextSize = 16
+    minimizeButton.TextColor3 = colors.text
     local minimizeCorner = Instance.new("UICorner", minimizeButton)
-    minimizeCorner.CornerRadius = UDim.new(0, 3)
+    minimizeCorner.CornerRadius = UDim.new(0, 4)
+    
+    createButtonHoverEffect(minimizeButton)
     
     minimizeButton.MouseButton1Click:Connect(function()
         minimized = not minimized
         contentFrame.Visible = not minimized
         minimizeButton.Text = minimized and "+" or "–"
         
-        local targetSize = minimized and UDim2.new(0, 160, 0, 30) or originalSize -- Adjusted for new title bar height
+        local targetSize = minimized and UDim2.new(0, 200, 0, 35) or originalSize
         TweenService:Create(mainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Size = targetSize}):Play()
     end)
 
-    applyRainbowEffect(titleBar)
-    
     local currentLayoutOrder = 1
     local function createCategory(title)
-        local categoryLabel = Instance.new("TextLabel", contentFrame)
-        categoryLabel.Size = UDim2.new(1, 0, 0, 20) -- Smaller category label
-        categoryLabel.Text = title
-        categoryLabel.Font = Enum.Font.SourceSansBold
-        categoryLabel.TextSize = 15 -- Smaller text
-        categoryLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        categoryLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        categoryLabel.BackgroundTransparency = 0.5
-        categoryLabel.TextXAlignment = Enum.TextXAlignment.Center
-        categoryLabel.LayoutOrder = currentLayoutOrder
+        local categoryFrame = Instance.new("Frame", contentFrame)
+        categoryFrame.Size = UDim2.new(1, 0, 0, 25)
+        categoryFrame.BackgroundColor3 = colors.category
+        categoryFrame.BackgroundTransparency = 0.5
+        categoryFrame.LayoutOrder = currentLayoutOrder
         currentLayoutOrder = currentLayoutOrder + 1
         
-        local categoryCorner = Instance.new("UICorner", categoryLabel)
+        local categoryCorner = Instance.new("UICorner", categoryFrame)
         categoryCorner.CornerRadius = UDim.new(0, 4)
-
-        applyRainbowEffect(categoryLabel)
-        return categoryLabel
+        
+        local categoryLabel = Instance.new("TextLabel", categoryFrame)
+        categoryLabel.Size = UDim2.new(1, 0, 1, 0)
+        categoryLabel.Text = title
+        categoryLabel.Font = Enum.Font.GothamBold
+        categoryLabel.TextSize = 14
+        categoryLabel.TextColor3 = colors.text
+        categoryLabel.BackgroundTransparency = 1
+        categoryLabel.TextXAlignment = Enum.TextXAlignment.Center
+        
+        return categoryFrame
     end
 
     local function createToggleButton(name, parent, callback)
         local container = Instance.new("Frame", parent)
-        container.Size = UDim2.new(1, 0, 0, 25) -- Smaller container for toggle
+        container.Size = UDim2.new(1, 0, 0, 30)
         container.BackgroundTransparency = 1
         container.LayoutOrder = currentLayoutOrder
         currentLayoutOrder = currentLayoutOrder + 1
@@ -418,25 +450,29 @@ local function createV1Menu()
         local label = Instance.new("TextLabel", container)
         label.Size = UDim2.new(0.7, 0, 1, 0)
         label.Text = name
-        label.Font = Enum.Font.SourceSansSemibold
-        label.TextSize = 14 -- Smaller text
-        label.TextColor3 = Color3.new(1, 1, 1)
+        label.Font = Enum.Font.GothamSemibold
+        label.TextSize = 14
+        label.TextColor3 = colors.text
         label.BackgroundTransparency = 1
         label.TextXAlignment = Enum.TextXAlignment.Left
-        applyRainbowEffect(label)
 
         local switch = Instance.new("TextButton", container)
-        switch.Size = UDim2.new(0, 35, 0, 18) -- Smaller switch
-        switch.Position = UDim2.new(1, -40, 0.5, -9) -- Adjusted position
-        switch.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        switch.Size = UDim2.new(0, 45, 0, 22)
+        switch.Position = UDim2.new(1, -50, 0.5, -11)
+        switch.BackgroundColor3 = colors.toggleOff
         switch.Text = ""
         local switchCorner = Instance.new("UICorner", switch)
         switchCorner.CornerRadius = UDim.new(0.5, 0)
+        
+        local switchStroke = Instance.new("UIStroke", switch)
+        switchStroke.Color = colors.accent
+        switchStroke.Thickness = 1
+        switchStroke.Transparency = 0.7
 
         local nub = Instance.new("Frame", switch)
-        nub.Size = UDim2.new(0, 14, 0, 14) -- Smaller nub
-        nub.Position = UDim2.new(0, 2, 0.5, -7) -- Adjusted position
-        nub.BackgroundColor3 = Color3.new(1, 1, 1)
+        nub.Size = UDim2.new(0, 18, 0, 18)
+        nub.Position = UDim2.new(0, 2, 0.5, -9)
+        nub.BackgroundColor3 = colors.text
         local nubCorner = Instance.new("UICorner", nub)
         nubCorner.CornerRadius = UDim.new(0.5, 0)
 
@@ -444,27 +480,34 @@ local function createV1Menu()
         switch.MouseButton1Click:Connect(function()
             state = not state
             callback(state)
-            local nubPos = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7) -- Adjusted nub position
-            local switchColor = state and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(70, 70, 70)
+            local nubPos = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+            local switchColor = state and colors.toggleOn or colors.toggleOff
             TweenService:Create(nub, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Position = nubPos }):Play()
             TweenService:Create(switch, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { BackgroundColor3 = switchColor }):Play()
         end)
+        
+        createButtonHoverEffect(switch)
     end
     
     local function createOneShotButton(name, parent, callback)
         local btn = Instance.new("TextButton", parent)
-        btn.Size = UDim2.new(1, 0, 0, 25) -- Smaller button
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-        btn.BackgroundTransparency = 1
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.Font = Enum.Font.SourceSansSemibold
-        btn.TextSize = 14 -- Smaller text
+        btn.Size = UDim2.new(1, 0, 0, 30)
+        btn.BackgroundColor3 = colors.button
+        btn.TextColor3 = colors.text
+        btn.Font = Enum.Font.GothamSemibold
+        btn.TextSize = 14
         btn.Text = name
         btn.LayoutOrder = currentLayoutOrder
         currentLayoutOrder = currentLayoutOrder + 1
         local btnCorner = Instance.new("UICorner", btn)
         btnCorner.CornerRadius = UDim.new(0, 4)
-        applyRainbowEffect(btn)
+        
+        local btnStroke = Instance.new("UIStroke", btn)
+        btnStroke.Color = colors.accent
+        btnStroke.Thickness = 1
+        btnStroke.Transparency = 0.7
+        
+        createButtonHoverEffect(btn)
 
         btn.MouseButton1Click:Connect(callback)
     end
@@ -477,21 +520,30 @@ local function createV1Menu()
     createToggleButton("Jump Boost", contentFrame, function(state) boostJumpEnabled = state end)
 
     -- Visual Settings
-    createCategory("VISUALS SETTINGS")
+    createCategory("VISUALS")
     createToggleButton("ESP", contentFrame, toggleESP)
     createToggleButton("Invisible", contentFrame, setInvisible)
 
-    -- Steal Settings
-    createCategory("STEAL SETTING")
-    createOneShotButton("Start Steal", contentFrame, function()
+    -- Teleport Settings
+    createCategory("TELEPORT")
+    createOneShotButton("Toggle Teleport", contentFrame, function()
         if teleportGui then
             teleportGui.Enabled = not teleportGui.Enabled
+            StarterGui:SetCore("SendNotification", {
+                Title = "Teleport",
+                Text = teleportGui.Enabled and "Teleport GUI enabled" or "Teleport GUI disabled",
+                Duration = 2
+            })
         end
     end)
     
-    -- World Settings
-    createCategory("WORLD SETTINGS")
-    createOneShotButton("Change Server", contentFrame, serverHop)
+    -- Server Settings
+    createCategory("SERVER")
+    createOneShotButton("Server Hop", contentFrame, serverHop)
+    
+    -- Initial animation
+    mainFrame.Position = UDim2.new(0.05, 0, 0, -400)
+    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0.05, 0, 0.5, -160)}):Play()
 end
 
 -- Initialize Menus
