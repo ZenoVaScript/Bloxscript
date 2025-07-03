@@ -10,378 +10,362 @@ local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 local Workspace = game:GetService("Workspace")
 
+-- Rayfield setup
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
 -- LOCAL PLAYER & CHARACTER
 local player = Players.LocalPlayer
 local char, root, humanoid
+local antiStunConnection = nil
 
--- GUI CREATION
-local gui = Instance.new("ScreenGui")
-gui.Name = "LuxuryBoxGUI"
-gui.ResetOnSpawn = false
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.Parent = player:WaitForChild("PlayerGui")
-
--- MAIN CONTAINER
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 450)
-mainFrame.Position = UDim2.new(0.05, 0, 0.5, -225)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = gui
-
--- BOX STYLE ELEMENTS
-local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 40)
-topBar.Position = UDim2.new(0, 0, 0, 0)
-topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-topBar.BorderSizePixel = 0
-topBar.Parent = mainFrame
-
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Text = "ZENOVA SAB | V1"
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextSize = 18
-titleLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
-titleLabel.Size = UDim2.new(1, -80, 1, 0)
-titleLabel.Position = UDim2.new(0, 15, 0, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-titleLabel.Parent = topBar
-
--- CONTROL BUTTONS
-local closeButton = Instance.new("TextButton")
-closeButton.Text = "X"
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 16
-closeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -35, 0.5, -15)
-closeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-closeButton.Parent = topBar
-
-local minimizeButton = Instance.new("TextButton")
-minimizeButton.Text = "_"
-minimizeButton.Font = Enum.Font.GothamBold
-minimizeButton.TextSize = 16
-minimizeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-minimizeButton.Size = UDim2.new(0, 30, 0, 30)
-minimizeButton.Position = UDim2.new(1, -70, 0.5, -15)
-minimizeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-minimizeButton.Parent = topBar
-
--- CONTENT AREA
-local contentFrame = Instance.new("ScrollingFrame")
-contentFrame.Size = UDim2.new(1, -10, 1, -50)
-contentFrame.Position = UDim2.new(0, 5, 0, 45)
-contentFrame.BackgroundTransparency = 1
-contentFrame.BorderSizePixel = 0
-contentFrame.ScrollBarThickness = 4
-contentFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 120)
-contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-contentFrame.Parent = mainFrame
-
-local listLayout = Instance.new("UIListLayout")
-listLayout.Padding = UDim.new(0, 10)
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Parent = contentFrame
-
--- BOX-STYLE CATEGORY FUNCTION
-local function createBoxCategory(title)
-    local category = Instance.new("Frame")
-    category.Size = UDim2.new(1, 0, 0, 42)
-    category.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    category.BorderSizePixel = 0
-    category.Parent = contentFrame
-    
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 24)
-    titleBar.Position = UDim2.new(0, 0, 0, 0)
-    titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = category
-    
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Text = string.upper(title)
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = 14
-    titleLabel.TextColor3 = Color3.fromRGB(180, 180, 255)
-    titleLabel.Size = UDim2.new(1, -10, 1, 0)
-    titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = titleBar
-    
-    local contentArea = Instance.new("Frame")
-    contentArea.Size = UDim2.new(1, 0, 0, 0)
-    contentArea.Position = UDim2.new(0, 0, 0, 24)
-    contentArea.BackgroundTransparency = 1
-    contentArea.Parent = category
-    
-    local contentLayout = Instance.new("UIListLayout")
-    contentLayout.Padding = UDim.new(0, 5)
-    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    contentLayout.Parent = contentArea
-    
-    return contentArea
+local function updateCharacter()
+    char = player.Character or player.CharacterAdded:Wait()
+    root = char:WaitForChild("HumanoidRootPart")
+    humanoid = char:WaitForChild("Humanoid")
 end
 
--- BOX-STYLE TOGGLE FUNCTION
-local function createBoxToggle(parent, text, defaultState, callback)
-    local toggle = Instance.new("Frame")
-    toggle.Size = UDim2.new(1, 0, 0, 30)
-    toggle.BackgroundTransparency = 1
-    toggle.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Text = text
-    label.Font = Enum.Font.GothamSemibold
-    label.TextSize = 14
-    label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.BackgroundTransparency = 1
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggle
-    
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(0, 50, 0, 24)
-    toggleFrame.Position = UDim2.new(1, -60, 0.5, -12)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.Parent = toggle
-    
-    local toggleButton = Instance.new("Frame")
-    toggleButton.Size = UDim2.new(0, 20, 0, 20)
-    toggleButton.Position = UDim2.new(0, 3, 0.5, -10)
-    toggleButton.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-    toggleButton.BorderSizePixel = 0
-    toggleButton.Parent = toggleFrame
-    
-    local state = defaultState or false
-    
-    local function updateToggle()
-        if state then
-            TweenService:Create(toggleButton, TweenInfo.new(0.2), {
-                Position = UDim2.new(1, -23, 0.5, -10),
-                BackgroundColor3 = Color3.fromRGB(100, 255, 150)
-            }):Play()
-            TweenService:Create(toggleFrame, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(30, 80, 50)
-            }):Play()
-        else
-            TweenService:Create(toggleButton, TweenInfo.new(0.2), {
-                Position = UDim2.new(0, 3, 0.5, -10),
-                BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-            }):Play()
-            TweenService:Create(toggleFrame, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-            }):Play()
+updateCharacter()
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    updateCharacter()
+end)
+
+-- SCRIPT-WIDE STATES & VARIABLES
+local espEnabled = false
+local espConnections = {}
+local boostJumpEnabled = false
+local isTeleporting = false
+
+---------------------------------------------------
+--[[           FUNCTION DEFINITIONS            ]]--
+---------------------------------------------------
+
+-- TELEPORT / MOVEMENT FUNCTIONS
+local doorPositions = {
+    Vector3.new(-466, -1, 220), Vector3.new(-466, -2, 116), Vector3.new(-466, -2, 8),
+    Vector3.new(-464, -2, -102), Vector3.new(-351, -2, -100), Vector3.new(-354, -2, 5),
+    Vector3.new(-354, -2, 115), Vector3.new(-358, -2, 223)
+}
+
+local function getNearestDoor()
+    if not root then return nil end
+    local closest, minDist = nil, math.huge
+    for _, door in ipairs(doorPositions) do
+        local dist = (root.Position - door).Magnitude
+        if dist < minDist then
+            minDist = dist
+            closest = door
         end
-        callback(state)
     end
-    
-    toggleFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            state = not state
-            updateToggle()
-        end
-    end)
-    
-    updateToggle()
-    
-    return {
-        SetState = function(newState)
-            state = newState
-            updateToggle()
-        end
-    }
+    return closest
 end
 
--- BOX-STYLE BUTTON FUNCTION
-local function createBoxButton(parent, text, callback)
-    local button = Instance.new("TextButton")
-    button.Text = text
-    button.Font = Enum.Font.GothamSemibold
-    button.TextSize = 14
-    button.TextColor3 = Color3.fromRGB(220, 220, 220)
-    button.Size = UDim2.new(1, -10, 0, 36)
-    button.Position = UDim2.new(0, 5, 0, 0)
-    button.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    button.BorderSizePixel = 0
-    button.AutoButtonColor = false
-    button.Parent = parent
-    
-    local hoverFrame = Instance.new("Frame")
-    hoverFrame.Size = UDim2.new(1, 0, 1, 0)
-    hoverFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    hoverFrame.BackgroundTransparency = 0.9
-    hoverFrame.BorderSizePixel = 0
-    hoverFrame.Visible = false
-    hoverFrame.Parent = button
-    
-    button.MouseEnter:Connect(function()
-        hoverFrame.Visible = true
-        TweenService:Create(button, TweenInfo.new(0.15), {
-            BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        hoverFrame.Visible = false
-        TweenService:Create(button, TweenInfo.new(0.15), {
-            BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        }):Play()
-    end)
-    
-    button.MouseButton1Down:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        }):Play()
-    end)
-    
-    button.MouseButton1Up:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-        }):Play()
-        callback()
-    end)
-    
-    return button
-end
-
--- CREATE UI ELEMENTS
--- Player Settings
-local playerCategory = createBoxCategory("Player Settings")
-createBoxToggle(playerCategory, "God Mode", false, setGodMode)
-createBoxToggle(playerCategory, "Aimbot", false, toggleAimbot)
-createBoxToggle(playerCategory, "Jump Boost", false, function(state) 
-    boostJumpEnabled = state 
-end)
-
--- Visual Settings
-local visualCategory = createBoxCategory("Visual Settings")
-createBoxToggle(visualCategory, "ESP", false, toggleESP)
-createBoxToggle(visualCategory, "Invisible", false, setInvisible)
-
--- Steal Settings
-local stealCategory = createBoxCategory("Steal Settings")
-createBoxButton(stealCategory, "Open Teleport Control", function()
-    if teleportGui then
-        teleportGui.Enabled = not teleportGui.Enabled
+local function teleportToSky()
+    if not root then updateCharacter() end
+    local door = getNearestDoor()
+    if door and root then
+        TweenService:Create(root, TweenInfo.new(1.2), { CFrame = CFrame.new(door) }):Play()
+        task.wait(1.3)
+        root.CFrame = root.CFrame + Vector3.new(0, 200, 0)
     end
-end)
-
--- World Settings
-local worldCategory = createBoxCategory("World Settings")
-createBoxButton(worldCategory, "Server Hop", serverHop)
-
--- WINDOW CONTROLS
-local minimized = false
-minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    contentFrame.Visible = not minimized
-    minimizeButton.Text = minimized and "+" or "_"
-    
-    local targetSize = minimized and UDim2.new(0, 300, 0, 40) or UDim2.new(0, 300, 0, 450)
-    TweenService:Create(mainFrame, TweenInfo.new(0.2), {Size = targetSize}):Play()
-end)
-
-closeButton.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
-
--- DRAGGABLE WINDOW
-local dragging
-local dragInput
-local dragStart
-local startPos
-
-local function updateInput(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
-topBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+local function teleportToGround()
+    if not root then updateCharacter() end
+    if root then
+        root.CFrame = root.CFrame - Vector3.new(0, 50, 0)
+    end
+end
+
+-- COMBAT / PLAYER STATE FUNCTIONS
+function setGodMode(on)
+    if not humanoid then updateCharacter() end
+    if not humanoid then return end
+
+    if on then
+        humanoid.MaxHealth = math.huge
+        humanoid.Health = math.huge
+        if antiStunConnection then antiStunConnection:Disconnect() end
+        antiStunConnection = humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+            if humanoid.Health < math.huge then
+                humanoid.Health = math.huge
+            end
+        end)
+    else
+        if antiStunConnection then antiStunConnection:Disconnect() end
+        antiStunConnection = nil
+        pcall(function()
+            humanoid.MaxHealth = 100
+            humanoid.Health = 100
+        end)
+    end
+end
+
+local aimbotRange = 100
+
+local function getClosestAimbotTarget()
+    if not root then return nil end
+
+    local closestPlayer, shortestDist = nil, aimbotRange
+    
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character.Humanoid.Health > 0 then
+            local targetHRP = p.Character.HumanoidRootPart
+            local dist = (root.Position - targetHRP.Position).Magnitude
+            
+            if dist < shortestDist then
+                closestPlayer = p
+                shortestDist = dist
+            end
+        end
+    end
+    return closestPlayer
+end
+
+local function toggleAimbot(state)
+    if state then
+        RunService.Heartbeat:Connect(function()
+            local target = getClosestAimbotTarget()
+            if target and target.Character and char and root and humanoid then
+                local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
+                if targetHrp then
+                    root.CFrame = CFrame.lookAt(root.Position, Vector3.new(targetHrp.Position.X, root.Position.Y, targetHrp.Position.Z))
+                end
+            end
+        end)
+    end
+end
+
+UserInputService.JumpRequest:Connect(function()
+    if boostJumpEnabled and humanoid and root then
+        root.AssemblyLinearVelocity = Vector3.new(0, 100, 0)
+        local gravityConn
+        gravityConn = RunService.Stepped:Connect(function()
+            if not char or not root or not humanoid or not boostJumpEnabled then
+                gravityConn:Disconnect()
+                return
+            end
+
+            if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                root.Velocity = Vector3.new(root.Velocity.X, math.clamp(root.Velocity.Y, -20, 150), root.Velocity.Z)
+            elseif humanoid.FloorMaterial ~= Enum.Material.Air then
+                gravityConn:Disconnect()
             end
         end)
     end
 end)
 
-topBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
+-- VISUALS FUNCTIONS
+function setInvisible(on)
+    if not char then updateCharacter() end
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            part.Transparency = on and 1 or part.Parent:IsA("Accessory") and part.Parent.Handle.Transparency or 0
+        elseif part:IsA("Decal") then
+            part.Transparency = on and 1 or 0
+        end
     end
-end)
+end
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        updateInput(input)
-    end
-end)
+local function toggleESP(state)
+    espEnabled = state
+    if state then
+        local function applyHighlight(character)
+            if not character or character:FindFirstChild("ServerV1ESP") then return end
+            local h = Instance.new("Highlight")
+            h.Name = "ServerV1ESP"
+            h.FillColor = Color3.fromRGB(255, 50, 50)
+            h.OutlineColor = Color3.new(1, 1, 1)
+            h.FillTransparency = 0.5
+            h.OutlineTransparency = 0
+            h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            h.Parent = character
+        end
 
--- CREATE TELEPORT GUI (BOX STYLE)
-teleportGui = Instance.new("ScreenGui")
-teleportGui.Name = "LuxuryBoxTeleportGUI"
-teleportGui.ResetOnSpawn = false
-teleportGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-teleportGui.Enabled = false
-teleportGui.Parent = player:WaitForChild("PlayerGui")
-
-local teleportFrame = Instance.new("Frame")
-teleportFrame.Size = UDim2.new(0, 220, 0, 120)
-teleportFrame.Position = UDim2.new(0.5, -110, 0.5, -60)
-teleportFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-teleportFrame.BorderSizePixel = 0
-teleportFrame.Parent = teleportGui
-
-local teleportTopBar = Instance.new("Frame")
-teleportTopBar.Size = UDim2.new(1, 0, 0, 30)
-teleportTopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-teleportTopBar.BorderSizePixel = 0
-teleportTopBar.Parent = teleportFrame
-
-local teleportTitle = Instance.new("TextLabel")
-teleportTitle.Text = "TELEPORT CONTROL"
-teleportTitle.Font = Enum.Font.GothamBold
-teleportTitle.TextSize = 16
-teleportTitle.TextColor3 = Color3.fromRGB(220, 220, 255)
-teleportTitle.Size = UDim2.new(1, -10, 1, 0)
-teleportTitle.Position = UDim2.new(0, 10, 0, 0)
-teleportTitle.BackgroundTransparency = 1
-teleportTitle.TextXAlignment = Enum.TextXAlignment.Left
-teleportTitle.Parent = teleportTopBar
-
-local teleportClose = Instance.new("TextButton")
-teleportClose.Text = "X"
-teleportClose.Font = Enum.Font.GothamBold
-teleportClose.TextSize = 16
-teleportClose.TextColor3 = Color3.fromRGB(200, 200, 200)
-teleportClose.Size = UDim2.new(0, 30, 0, 30)
-teleportClose.Position = UDim2.new(1, -35, 0.5, -15)
-teleportClose.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-teleportClose.BorderSizePixel = 0
-teleportClose.Parent = teleportTopBar
-
-teleportClose.MouseButton1Click:Connect(function()
-    teleportGui.Enabled = false
-end)
-
-local teleportButton = createBoxButton(teleportFrame, "TELEPORT TO SKY", function()
-    isTeleporting = not isTeleporting
-    if isTeleporting then
-        teleportToSky()
-        teleportButton.Text = "TELEPORT TO GROUND"
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= player and p.Character then
+                applyHighlight(p.Character)
+            end
+        end
+        
+        table.insert(espConnections, Players.PlayerAdded:Connect(function(newP)
+            newP.CharacterAdded:Connect(function(char)
+                if espEnabled then applyHighlight(char) end
+            end)
+        end))
+        
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= player then
+                table.insert(espConnections, p.CharacterAdded:Connect(function(char)
+                    if espEnabled then applyHighlight(char) end
+                end))
+            end
+        end
     else
-        teleportToGround()
-        teleportButton.Text = "TELEPORT TO SKY"
+        for _, c in ipairs(espConnections) do c:Disconnect() end
+        espConnections = {}
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character then
+                local h = p.Character:FindFirstChild("ServerV1ESP")
+                if h then h:Destroy() end
+            end
+        end
     end
-end)
-teleportButton.Position = UDim2.new(0, 10, 0, 40)
+end
+
+-- WORLD / SERVER FUNCTIONS
+local function serverHop()
+    local placeId = game.PlaceId
+    local servers = {}
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"))
+    end)
+    if success and response and response.data then
+        for _, server in ipairs(response.data) do
+            if server.playing and server.maxPlayers and server.playing < server.maxPlayers and server.id ~= game.JobId then
+                table.insert(servers, server.id)
+            end
+        end
+    end
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(placeId, servers[math.random(1, #servers)])
+    else
+        Rayfield:Notify({
+            Title = "Server Hop",
+            Content = "No other servers found.",
+            Duration = 3,
+            Actions = {
+                Ignore = {
+                    Name = "Okay",
+                    Callback = function() end
+                },
+            },
+        })
+    end
+end
+
+---------------------------------------------------
+--[[               RAYFIELD UI                ]]--
+---------------------------------------------------
+
+local Window = Rayfield:CreateWindow({
+    Name = "ZenoVa SAB",
+    LoadingTitle = "Loading ZenoVa Script",
+    LoadingSubtitle = "by ZenoVa",
+    ConfigurationSaving = {
+       Enabled = false,
+       FolderName = nil,
+       FileName = "ZenoVaSAB"
+    },
+    Discord = {
+       Enabled = false,
+       Invite = "noinvitelink",
+       RememberJoins = true
+    },
+    KeySystem = false,
+})
+
+-- Player Tab
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+
+PlayerTab:CreateToggle({
+    Name = "Godmode",
+    CurrentValue = false,
+    Flag = "GodmodeToggle",
+    Callback = function(Value)
+        setGodMode(Value)
+    end,
+})
+
+PlayerTab:CreateToggle({
+    Name = "Aimbot",
+    CurrentValue = false,
+    Flag = "AimbotToggle",
+    Callback = function(Value)
+        toggleAimbot(Value)
+    end,
+})
+
+PlayerTab:CreateToggle({
+    Name = "Jump Boost",
+    CurrentValue = false,
+    Flag = "JumpBoostToggle",
+    Callback = function(Value)
+        boostJumpEnabled = Value
+    end,
+})
+
+-- Visuals Tab
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+
+VisualsTab:CreateToggle({
+    Name = "ESP",
+    CurrentValue = false,
+    Flag = "ESPToggle",
+    Callback = function(Value)
+        toggleESP(Value)
+    end,
+})
+
+VisualsTab:CreateToggle({
+    Name = "Invisible",
+    CurrentValue = false,
+    Flag = "InvisibleToggle",
+    Callback = function(Value)
+        setInvisible(Value)
+    end,
+})
+
+-- Steal Tab
+local StealTab = Window:CreateTab("Steal", 4483362458)
+
+local teleportWindow = nil
+StealTab:CreateButton({
+    Name = "Start Steal",
+    Callback = function()
+        if not teleportWindow then
+            teleportWindow = Window:CreateWindow({
+                Name = "Teleport Control",
+                LoadingTitle = "Teleport Controls",
+                LoadingSubtitle = "Sky/Ground Teleport",
+                ConfigurationSaving = {
+                   Enabled = false,
+                },
+            })
+            
+            teleportWindow:CreateButton({
+                Name = isTeleporting and "GROUND" or "SKY",
+                Callback = function()
+                    isTeleporting = not isTeleporting
+                    if isTeleporting then
+                        teleportToSky()
+                    else
+                        teleportToGround()
+                    end
+                    -- Update button text
+                    for _, element in pairs(teleportWindow:GetChildren()) do
+                        if element.Name == "Button" then
+                            element:Set("Name", isTeleporting and "GROUND" or "SKY")
+                        end
+                    end
+                end,
+            })
+        else
+            teleportWindow:Destroy()
+            teleportWindow = nil
+        end
+    end,
+})
+
+-- World Tab
+local WorldTab = Window:CreateTab("World", 4483362458)
+
+WorldTab:CreateButton({
+    Name = "Change Server",
+    Callback = function()
+        serverHop()
+    end,
+})
+
+Rayfield:LoadConfiguration()
