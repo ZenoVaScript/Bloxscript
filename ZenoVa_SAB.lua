@@ -68,8 +68,8 @@ local function toggleSpeedBoost(state)
         -- Create connection to maintain speed
         if speedBoostConnection then speedBoostConnection:Disconnect() end
         speedBoostConnection = humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-            if humanoid.WalkSpeed ~= 50 then
-                humanoid.WalkSpeed = 50
+            if humanoid.WalkSpeed ~= 40 then
+                humanoid.WalkSpeed = 40
             end
         end)
     else
