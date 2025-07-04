@@ -7,6 +7,7 @@ local TeleportService = game:GetService("TeleportService")
 local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- LOCAL PLAYER & CHARACTER
 local player = Players.LocalPlayer
@@ -27,12 +28,15 @@ end)
 
 -- SCRIPT-WIDE STATES & VARIABLES
 local gui
-local godConnection, aimConnection
+local godConnection, aimConnection, speedBoostConnection
 local espEnabled = false
 local espConnections = {}
 local boostJumpEnabled = false
 local teleportGui
 local isTeleporting = false
+local speedBoostEnabled = false
+local originalWalkSpeed = 16
+local speedBoostGui
 
 -- COLOR SCHEME
 local colors = {
@@ -50,6 +54,80 @@ local colors = {
 ---------------------------------------------------
 --[[           FUNCTION DEFINITIONS            ]]--
 ---------------------------------------------------
+
+-- SPEED BOOST FUNCTIONS
+local function toggleSpeedBoost(state)
+    speedBoostEnabled = state
+    if not humanoid then updateCharacter() end
+    if not humanoid then return end
+    
+    if state then
+        originalWalkSpeed = humanoid.WalkSpeed
+        humanoid.WalkSpeed = 50 -- Adjust this value as needed
+        
+        -- Create connection to maintain speed
+        if speedBoostConnection then speedBoostConnection:Disconnect() end
+        speedBoostConnection = humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if humanoid.WalkSpeed ~= 50 then
+                humanoid.WalkSpeed = 50
+            end
+        end)
+    else
+        if speedBoostConnection then
+            speedBoostConnection:Disconnect()
+            speedBoostConnection = nil
+        end
+        humanoid.WalkSpeed = originalWalkSpeed
+    end
+    
+    -- Toggle speed boost GUI visibility
+    if speedBoostGui then
+        speedBoostGui.Enabled = state
+        if state then
+            local indicator = speedBoostGui:FindFirstChildOfClass("Frame")
+            if indicator then
+                indicator.Position = UDim2.new(0.5, -40, 1, -80)
+                TweenService:Create(indicator, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                    Position = UDim2.new(0.5, -40, 1, -50)
+                }):Play()
+            end
+        end
+    end
+end
+
+local function createSpeedBoostGUI()
+    speedBoostGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    speedBoostGui.Name = "SpeedBoostIndicator"
+    speedBoostGui.ResetOnSpawn = false
+    speedBoostGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local indicator = Instance.new("Frame", speedBoostGui)
+    indicator.Size = UDim2.new(0, 80, 0, 30)
+    indicator.Position = UDim2.new(0.5, -40, 1, -50)
+    indicator.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    indicator.BackgroundTransparency = 0.3
+    indicator.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner", indicator)
+    corner.CornerRadius = UDim.new(0, 6)
+    
+    local stroke = Instance.new("UIStroke", indicator)
+    stroke.Color = Color3.fromRGB(0, 200, 100)
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    
+    local label = Instance.new("TextLabel", indicator)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Text = "BOOST"
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.TextColor3 = Color3.fromRGB(0, 200, 100)
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    
+    -- Initially hidden
+    speedBoostGui.Enabled = false
+end
 
 -- TELEPORT / MOVEMENT FUNCTIONS
 local doorPositions = {
@@ -516,6 +594,7 @@ local function createV1Menu()
     createToggleButton("Godmode", contentFrame, setGodMode)
     createToggleButton("Aimbot", contentFrame, toggleAimbot)
     createToggleButton("Jump Boost", contentFrame, function(state) boostJumpEnabled = state end)
+    createToggleButton("Speed Boost", contentFrame, toggleSpeedBoost)
 
     -- Visual Settings
     createCategory("VISUALS")
@@ -546,4 +625,5 @@ end
 
 -- Initialize Menus
 createTeleportGUI()
+createSpeedBoostGUI()
 createV1Menu()
