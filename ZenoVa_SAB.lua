@@ -31,7 +31,9 @@ local gui
 local godConnection, aimConnection, speedBoostConnection
 local espEnabled = false
 local espConnections = {}
-local boostJumpEnabled = false
+local infinityJumpEnabled = false -- Renamed from boostJumpEnabled
+local jumpBoostEnabled = false -- New single jump boost
+local jumpBoostUsed = false -- Track if jump boost has been used
 local teleportGui
 local isTeleporting = false
 local speedBoostEnabled = false
@@ -128,6 +130,51 @@ local function createSpeedBoostGUI()
     -- Initially hidden
     speedBoostGui.Enabled = false
 end
+
+-- JUMP FUNCTIONS
+local function toggleInfinityJump(state)
+    infinityJumpEnabled = state
+end
+
+local function toggleJumpBoost(state)
+    jumpBoostEnabled = state
+    jumpBoostUsed = false -- Reset when toggled
+end
+
+UserInputService.JumpRequest:Connect(function()
+    if infinityJumpEnabled and humanoid and root then
+        -- Infinity jump functionality
+        root.AssemblyLinearVelocity = Vector3.new(0, 100, 0)
+        local gravityConn
+        gravityConn = RunService.Stepped:Connect(function()
+            if not char or not root or not humanoid or not infinityJumpEnabled then
+                gravityConn:Disconnect()
+                return
+            end
+
+            if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                root.Velocity = Vector3.new(root.Velocity.X, math.clamp(root.Velocity.Y, -20, 150), root.Velocity.Z)
+            elseif humanoid.FloorMaterial ~= Enum.Material.Air then
+                gravityConn:Disconnect()
+            end
+        end)
+    elseif jumpBoostEnabled and humanoid and root and not jumpBoostUsed then
+        -- Single jump boost functionality
+        root.AssemblyLinearVelocity = Vector3.new(0, 120, 0) -- Higher jump than infinity
+        jumpBoostUsed = true
+        
+        -- Reset when landing
+        local landedConn
+        landedConn = humanoid.StateChanged:Connect(function(_, newState)
+            if newState == Enum.HumanoidStateType.Landed then
+                jumpBoostUsed = false
+                if landedConn then
+                    landedConn:Disconnect()
+                end
+            end
+        end)
+    end
+end)
 
 -- TELEPORT / MOVEMENT FUNCTIONS
 local doorPositions = {
@@ -229,25 +276,6 @@ local function toggleAimbot(state)
         end
     end
 end
-
-UserInputService.JumpRequest:Connect(function()
-    if boostJumpEnabled and humanoid and root then
-        root.AssemblyLinearVelocity = Vector3.new(0, 100, 0)
-        local gravityConn
-        gravityConn = RunService.Stepped:Connect(function()
-            if not char or not root or not humanoid or not boostJumpEnabled then
-                gravityConn:Disconnect()
-                return
-            end
-
-            if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-                root.Velocity = Vector3.new(root.Velocity.X, math.clamp(root.Velocity.Y, -20, 150), root.Velocity.Z)
-            elseif humanoid.FloorMaterial ~= Enum.Material.Air then
-                gravityConn:Disconnect()
-            end
-        end)
-    end
-end)
 
 -- VISUALS FUNCTIONS
 function setInvisible(on)
@@ -425,9 +453,9 @@ local function createV1Menu()
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local mainFrame = Instance.new("Frame", gui)
-    local originalSize = UDim2.new(0, 200, 0, 320)
+    local originalSize = UDim2.new(0, 200, 0, 350) -- Increased height for new button
     mainFrame.Size = originalSize
-    mainFrame.Position = UDim2.new(0.05, 0, 0.5, -160)
+    mainFrame.Position = UDim2.new(0.05, 0, 0.5, -175) -- Adjusted position
     mainFrame.BackgroundColor3 = colors.background
     mainFrame.BackgroundTransparency = 0.2
     mainFrame.BorderSizePixel = 0
@@ -593,7 +621,8 @@ local function createV1Menu()
     createCategory("PLAYER SETTINGS")
     createToggleButton("Godmode", contentFrame, setGodMode)
     createToggleButton("Aimbot", contentFrame, toggleAimbot)
-    createToggleButton("Jump Boost", contentFrame, function(state) boostJumpEnabled = state end)
+    createToggleButton("Infinity Jump", contentFrame, toggleInfinityJump) -- Renamed
+    createToggleButton("Jump Boost", contentFrame, toggleJumpBoost) -- New
     createToggleButton("Speed Boost", contentFrame, toggleSpeedBoost)
 
     -- Visual Settings
@@ -620,7 +649,7 @@ local function createV1Menu()
     
     -- Initial animation
     mainFrame.Position = UDim2.new(0.05, 0, 0, -400)
-    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0.05, 0, 0.5, -160)}):Play()
+    TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0.05, 0, 0.5, -175)}):Play()
 end
 
 -- Initialize Menus
