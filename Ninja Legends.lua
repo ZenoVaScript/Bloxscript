@@ -689,84 +689,92 @@ if game.PlaceId == 3956818381 then
         end
     end)
 
-    -- Teleport System
-    local islands = {
-        "Enchanted Island", "Astral Island", "Mystical Island", "Space Island", 
-        "Tundra Island", "Eternal Island", "Sandstorm", "Thunderstorm",
-        "Ancient Inferno Island", "Midnight Shadow Island", "Mythical Souls Island",
-        "Winter Wonder Island", "Golden Master Island", "Dragon Legend Island"
-    }
+-- Teleport System
+local islands = {
+    "Enchanted Island", "Astral Island", "Mystical Island", "Space Island", 
+    "Tundra Island", "Eternal Island", "Sandstorm", "Thunderstorm",
+    "Ancient Inferno Island", "Midnight Shadow Island", "Mythical Souls Island",
+    "Winter Wonder Island", "Golden Master Island", "Dragon Legend Island"
+}
 
-    local islandDropdown = CreateDropdown(IslandSection, "Teleport to Island", islands, function(selected)
-        local island = game:GetService("Workspace").islandUnlockParts[selected]
-        if island then
-            Character.HumanoidRootPart.CFrame = island.CFrame
-            Notify("Teleported to "..selected)
-        end
-    end)
-
-    -- Add Unlock All Islands button with proper spacing
-    local Spacer = Instance.new("Frame")
-    Spacer.Name = "Spacer"
-    Spacer.Size = UDim2.new(1, 0, 0, 10)
-    Spacer.BackgroundTransparency = 1
-    Spacer.Parent = IslandSection
-
-    CreateButton(IslandSection, "Unlock All Islands", function()
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-        local RunService = game:GetService("RunService")
-
-        local function getCharacter()
-            local character = player.Character or player.CharacterAdded:Wait()
-            local rootPart = character:WaitForChild("HumanoidRootPart", 10)
-            return character, rootPart
-        end
-
-        local character, rootPart = getCharacter()
-        if not rootPart then
-            warn("Failed to find HumanoidRootPart!")
-            return
-        end
-
-        local sigmaFolder = workspace:WaitForChild("islandUnlockParts")
-        local parts = sigmaFolder:GetChildren()
-
-        task.spawn(function()
-            for _, part in ipairs(parts) do
-                if part:IsA("BasePart") then
-                    rootPart.CFrame = part.CFrame + Vector3.new(0, 1, 0)
-                    wait(0.75)
-                end
-            end
-            Notify("All islands unlocked!")
-        end)
-    end)
-
-    local trainingAreas = {
-        "Mystical Waters", "Lava Pit", "Tornado", "Sword of Legends", 
-        "Sword of Ancients", "Elemental Tornado", "Fallen Infinity Blade"
-    }
-
-    CreateDropdown(TrainingSection, "Teleport to Training", trainingAreas, function(selected)
-        local root = Character.HumanoidRootPart
-        if selected == "Mystical Waters" then
-            root.CFrame = CFrame.new(343.93, 8824.41, 116.45)
-        elseif selected == "Lava Pit" then
-            root.CFrame = CFrame.new(-126.42, 12952.41, 273.15)
-        elseif selected == "Tornado" then
-            root.CFrame = CFrame.new(313.67, 16871.97, -14.72)
-        elseif selected == "Sword of Legends" then
-            root.CFrame = CFrame.new(1847.01, 38.58, -139.80)
-        elseif selected == "Sword of Ancients" then
-            root.CFrame = CFrame.new(608.70, 38.58, 2425.60)
-        elseif selected == "Elemental Tornado" then
-            root.CFrame = CFrame.new(323.20, 30382.97, 0.84)
-        elseif selected == "Fallen Infinity Blade" then
-            root.CFrame = CFrame.new(1883.16, 66.97, -6811.91)
-        end
+local islandDropdown = CreateDropdown(IslandSection, "Teleport to Island", islands, function(selected)
+    local island = game:GetService("Workspace").islandUnlockParts[selected]
+    if island then
+        Character.HumanoidRootPart.CFrame = island.CFrame
         Notify("Teleported to "..selected)
+    end
+end)
+
+-- Add spacing between dropdown and button
+local Spacer1 = Instance.new("Frame")
+Spacer1.Name = "Spacer1"
+Spacer1.Size = UDim2.new(1, 0, 0, 15)  -- Increased spacing to 15 pixels
+Spacer1.BackgroundTransparency = 1
+Spacer1.Parent = IslandSection
+
+-- Add Unlock All Islands button with better spacing
+CreateButton(IslandSection, "Unlock All Islands", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local RunService = game:GetService("RunService")
+
+    local function getCharacter()
+        local character = player.Character or player.CharacterAdded:Wait()
+        local rootPart = character:WaitForChild("HumanoidRootPart", 10)
+        return character, rootPart
+    end
+
+    local character, rootPart = getCharacter()
+    if not rootPart then
+        warn("Failed to find HumanoidRootPart!")
+        return
+    end
+
+    local sigmaFolder = workspace:WaitForChild("islandUnlockParts")
+    local parts = sigmaFolder:GetChildren()
+
+    task.spawn(function()
+        for _, part in ipairs(parts) do
+            if part:IsA("BasePart") then
+                rootPart.CFrame = part.CFrame + Vector3.new(0, 1, 0)
+                wait(0.75)
+            end
+        end
+        Notify("All islands unlocked!")
     end)
+end)
+
+-- Add additional spacing after button
+local Spacer2 = Instance.new("Frame")
+Spacer2.Name = "Spacer2"
+Spacer2.Size = UDim2.new(1, 0, 0, 10)
+Spacer2.BackgroundTransparency = 1
+Spacer2.Parent = IslandSection
+
+local trainingAreas = {
+    "Mystical Waters", "Lava Pit", "Tornado", "Sword of Legends", 
+    "Sword of Ancients", "Elemental Tornado", "Fallen Infinity Blade"
+}
+
+CreateDropdown(TrainingSection, "Teleport to Training", trainingAreas, function(selected)
+    local root = Character.HumanoidRootPart
+    if selected == "Mystical Waters" then
+        root.CFrame = CFrame.new(343.93, 8824.41, 116.45)
+    elseif selected == "Lava Pit" then
+        root.CFrame = CFrame.new(-126.42, 12952.41, 273.15)
+    elseif selected == "Tornado" then
+        root.CFrame = CFrame.new(313.67, 16871.97, -14.72)
+    elseif selected == "Sword of Legends" then
+        root.CFrame = CFrame.new(1847.01, 38.58, -139.80)
+    elseif selected == "Sword of Ancients" then
+        root.CFrame = CFrame.new(608.70, 38.58, 2425.60)
+    elseif selected == "Elemental Tornado" then
+        root.CFrame = CFrame.new(323.20, 30382.97, 0.84)
+    elseif selected == "Fallen Infinity Blade" then
+        root.CFrame = CFrame.new(1883.16, 66.97, -6811.91)
+    end
+    Notify("Teleported to "..selected)
+end)
 
     -- Pet System
     local crystals = {}
