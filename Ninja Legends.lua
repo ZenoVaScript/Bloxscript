@@ -83,28 +83,44 @@ if game.PlaceId == 3956818381 then
     ResizeButton.TextSize = 14
     ResizeButton.Parent = TitleBar
 
+    -- Tab buttons container (will be hidden when minimized)
+    local TabButtonsContainer = Instance.new("Frame")
+    TabButtonsContainer.Name = "TabButtonsContainer"
+    TabButtonsContainer.Size = UDim2.new(0, 120, 1, -30)
+    TabButtonsContainer.Position = UDim2.new(0, 0, 0, 30)
+    TabButtonsContainer.BackgroundTransparency = 1
+    TabButtonsContainer.ClipsDescendants = true
+    TabButtonsContainer.Parent = MainFrame
+
     -- Tab buttons
     local TabButtons = Instance.new("Frame")
     TabButtons.Name = "TabButtons"
-    TabButtons.Size = UDim2.new(0, 120, 1, -30)
-    TabButtons.Position = UDim2.new(0, 0, 0, 30)
+    TabButtons.Size = UDim2.new(1, 0, 1, 0)
     TabButtons.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     TabButtons.BorderSizePixel = 0
-    TabButtons.Parent = MainFrame
+    TabButtons.Parent = TabButtonsContainer
 
     local TabList = Instance.new("UIListLayout")
     TabList.Padding = UDim.new(0, 5)
     TabList.Parent = TabButtons
 
+    -- Content frame container (will be hidden when minimized)
+    local ContentFrameContainer = Instance.new("Frame")
+    ContentFrameContainer.Name = "ContentFrameContainer"
+    ContentFrameContainer.Size = UDim2.new(1, -120, 1, -30)
+    ContentFrameContainer.Position = UDim2.new(0, 120, 0, 30)
+    ContentFrameContainer.BackgroundTransparency = 1
+    ContentFrameContainer.ClipsDescendants = true
+    ContentFrameContainer.Parent = MainFrame
+
     -- Content frame
     local ContentFrame = Instance.new("Frame")
     ContentFrame.Name = "ContentFrame"
-    ContentFrame.Size = UDim2.new(1, -120, 1, -30)
-    ContentFrame.Position = UDim2.new(0, 120, 0, 30)
+    ContentFrame.Size = UDim2.new(1, 0, 1, 0)
     ContentFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     ContentFrame.BorderSizePixel = 0
     ContentFrame.ClipsDescendants = true
-    ContentFrame.Parent = MainFrame
+    ContentFrame.Parent = ContentFrameContainer
 
     -- Tabs
     local Tabs = {
@@ -171,6 +187,8 @@ if game.PlaceId == 3956818381 then
             -- Restore
             MainFrame.Size = originalSize
             ResizeButton.Text = "◻"
+            TabButtonsContainer.Visible = true
+            ContentFrameContainer.Visible = true
             isMinimized = false
         else
             -- Minimize
@@ -178,6 +196,8 @@ if game.PlaceId == 3956818381 then
             originalPosition = MainFrame.Position
             MainFrame.Size = UDim2.new(0, 500, 0, 30)
             ResizeButton.Text = "⛶"
+            TabButtonsContainer.Visible = false
+            ContentFrameContainer.Visible = false
             isMinimized = true
         end
     end)
@@ -685,7 +705,13 @@ if game.PlaceId == 3956818381 then
         end
     end)
 
-    -- Add Unlock All Islands button
+    -- Add Unlock All Islands button with proper spacing
+    local Spacer = Instance.new("Frame")
+    Spacer.Name = "Spacer"
+    Spacer.Size = UDim2.new(1, 0, 0, 10)
+    Spacer.BackgroundTransparency = 1
+    Spacer.Parent = IslandSection
+
     CreateButton(IslandSection, "Unlock All Islands", function()
         local Players = game:GetService("Players")
         local player = Players.LocalPlayer
