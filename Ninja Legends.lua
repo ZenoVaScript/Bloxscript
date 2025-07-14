@@ -443,13 +443,14 @@ if game.PlaceId == 3956818381 then
         DropdownCorner.CornerRadius = UDim.new(0, 4)
         DropdownCorner.Parent = DropdownButton
 
-        local DropdownList = Instance.new("Frame")
+        local DropdownList = Instance.new("ScrollingFrame")
         DropdownList.Name = "List"
         DropdownList.Size = UDim2.new(1, 0, 0, 0)
         DropdownList.Position = UDim2.new(0, 0, 0, 35)
         DropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
         DropdownList.BorderSizePixel = 0
         DropdownList.Visible = false
+        DropdownList.ScrollBarThickness = 5
         DropdownList.Parent = DropdownFrame
 
         local DropdownListCorner = Instance.new("UICorner")
@@ -489,7 +490,8 @@ if game.PlaceId == 3956818381 then
             DropdownList.Visible = isOpen
             if isOpen then
                 local count = #DropdownList:GetChildren() - 2 -- subtract layout and corner
-                DropdownList.Size = UDim2.new(1, 0, 0, count * 27 + 10)
+                DropdownList.Size = UDim2.new(1, 0, 0, math.min(count * 27 + 10, 150))
+                DropdownList.CanvasSize = UDim2.new(0, 0, 0, count * 27 + 10)
             else
                 DropdownList.Size = UDim2.new(1, 0, 0, 0)
             end
@@ -675,12 +677,44 @@ if game.PlaceId == 3956818381 then
         "Winter Wonder Island", "Golden Master Island", "Dragon Legend Island"
     }
 
-    CreateDropdown(IslandSection, "Teleport to Island", islands, function(selected)
+    local islandDropdown = CreateDropdown(IslandSection, "Teleport to Island", islands, function(selected)
         local island = game:GetService("Workspace").islandUnlockParts[selected]
         if island then
             Character.HumanoidRootPart.CFrame = island.CFrame
             Notify("Teleported to "..selected)
         end
+    end)
+
+    -- Add Unlock All Islands button
+    CreateButton(IslandSection, "Unlock All Islands", function()
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local RunService = game:GetService("RunService")
+
+        local function getCharacter()
+            local character = player.Character or player.CharacterAdded:Wait()
+            local rootPart = character:WaitForChild("HumanoidRootPart", 10)
+            return character, rootPart
+        end
+
+        local character, rootPart = getCharacter()
+        if not rootPart then
+            warn("Failed to find HumanoidRootPart!")
+            return
+        end
+
+        local sigmaFolder = workspace:WaitForChild("islandUnlockParts")
+        local parts = sigmaFolder:GetChildren()
+
+        task.spawn(function()
+            for _, part in ipairs(parts) do
+                if part:IsA("BasePart") then
+                    rootPart.CFrame = part.CFrame + Vector3.new(0, 1, 0)
+                    wait(0.75)
+                end
+            end
+            Notify("All islands unlocked!")
+        end)
     end)
 
     local trainingAreas = {
@@ -767,12 +801,13 @@ if game.PlaceId == 3956818381 then
     end)
 
     -- Unlockers
-    CreateButton(UnlockSection, "Unlock Islands", function()
+    CreateButton(UnlockSection, "Unlock All Islands", function()
         for _,v in pairs(game:GetService("Workspace").islandUnlockParts:GetChildren()) do
             firetouchinterest(Character.HumanoidRootPart, v, 0)
             firetouchinterest(Character.HumanoidRootPart, v, 1)
             wait()
         end
+        Notify("All islands unlocked!")
     end)
 
     local elements = {}
@@ -785,6 +820,7 @@ if game.PlaceId == 3956818381 then
             game.ReplicatedStorage.rEvents.elementMasteryEvent:FireServer(element)
             wait()
         end
+        Notify("All elements unlocked!")
     end)
 
     -- Keybinds and Toggles
