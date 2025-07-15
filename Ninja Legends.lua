@@ -706,11 +706,50 @@ local islandDropdown = CreateDropdown(IslandSection, "Teleport to Island", islan
 end)
 
 -- Add larger spacing between dropdown and button
-local Spacer = Instance.new("Frame")
-Spacer.Name = "Spacer"
-Spacer.Size = UDim2.new(1, 0, 0, 25)  -- Increased spacing to 25 pixels
-Spacer.BackgroundTransparency = 1
-Spacer.Parent = IslandSection
+local Spacer1 = Instance.new("Frame")
+Spacer1.Name = "Spacer1"
+Spacer1.Size = UDim2.new(1, 0, 0, 30)  -- Increased spacing to 30 pixels
+Spacer1.BackgroundTransparency = 1
+Spacer1.Parent = IslandSection
+
+-- Add Unlock All Islands button
+CreateButton(IslandSection, "Unlock All Islands", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local RunService = game:GetService("RunService")
+
+    local function getCharacter()
+        local character = player.Character or player.CharacterAdded:Wait()
+        local rootPart = character:WaitForChild("HumanoidRootPart", 10)
+        return character, rootPart
+    end
+
+    local character, rootPart = getCharacter()
+    if not rootPart then
+        warn("Failed to find HumanoidRootPart!")
+        return
+    end
+
+    local sigmaFolder = workspace:WaitForChild("islandUnlockParts")
+    local parts = sigmaFolder:GetChildren()
+
+    task.spawn(function()
+        for _, part in ipairs(parts) do
+            if part:IsA("BasePart") then
+                rootPart.CFrame = part.CFrame + Vector3.new(0, 1, 0)
+                wait(0.75)
+            end
+        end
+        Notify("All islands unlocked!")
+    end)
+end)
+
+-- Add additional spacing after button
+local Spacer2 = Instance.new("Frame")
+Spacer2.Name = "Spacer2"
+Spacer2.Size = UDim2.new(1, 0, 0, 15)
+Spacer2.BackgroundTransparency = 1
+Spacer2.Parent = IslandSection
 
 -- Add Unlock All Islands button with better spacing
 CreateButton(IslandSection, "Unlock All Islands", function()
