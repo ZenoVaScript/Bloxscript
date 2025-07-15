@@ -705,12 +705,12 @@ local islandDropdown = CreateDropdown(IslandSection, "Teleport to Island", islan
     end
 end)
 
--- Add spacing between dropdown and button
-local Spacer1 = Instance.new("Frame")
-Spacer1.Name = "Spacer1"
-Spacer1.Size = UDim2.new(1, 0, 0, 15)  -- Increased spacing to 15 pixels
-Spacer1.BackgroundTransparency = 1
-Spacer1.Parent = IslandSection
+-- Add larger spacing between dropdown and button
+local Spacer = Instance.new("Frame")
+Spacer.Name = "Spacer"
+Spacer.Size = UDim2.new(1, 0, 0, 25)  -- Increased spacing to 25 pixels
+Spacer.BackgroundTransparency = 1
+Spacer.Parent = IslandSection
 
 -- Add Unlock All Islands button with better spacing
 CreateButton(IslandSection, "Unlock All Islands", function()
@@ -743,13 +743,6 @@ CreateButton(IslandSection, "Unlock All Islands", function()
         Notify("All islands unlocked!")
     end)
 end)
-
--- Add additional spacing after button
-local Spacer2 = Instance.new("Frame")
-Spacer2.Name = "Spacer2"
-Spacer2.Size = UDim2.new(1, 0, 0, 10)
-Spacer2.BackgroundTransparency = 1
-Spacer2.Parent = IslandSection
 
 local trainingAreas = {
     "Mystical Waters", "Lava Pit", "Tornado", "Sword of Legends", 
