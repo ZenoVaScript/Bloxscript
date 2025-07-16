@@ -35,15 +35,10 @@ local infinityJumpEnabled = false
 local jumpBoostEnabled = false
 local jumpBoostUsed = false
 local teleportGui
+local isTeleporting = false
 local speedBoostEnabled = false
 local originalWalkSpeed = 16
 local speedBoostGui
-
--- TELEPORT STATE
-local teleportState = {
-    isTeleporting = false,
-    originalPosition = nil
-}
 
 -- COLOR SCHEME
 local colors = {
@@ -175,7 +170,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- TELEPORT FUNCTIONS
+-- TELEPORT / MOVEMENT FUNCTIONS
 local doorPositions = {
     Vector3.new(-466, -1, 220), Vector3.new(-466, -2, 116), Vector3.new(-466, -2, 8),
     Vector3.new(-464, -2, -102), Vector3.new(-351, -2, -100), Vector3.new(-354, -2, 5),
@@ -199,34 +194,27 @@ local function teleportToSky()
     if not root then updateCharacter() end
     if not root then return end
     
-    if not teleportState.originalPosition then
-        teleportState.originalPosition = root.Position
-    end
-    
     local door = getNearestDoor()
     if door then
-        TweenService:Create(root, TweenInfo.new(1.2), {CFrame = CFrame.new(door)}):Play()
-        task.wait(1.3)
-        root.CFrame = root.CFrame + Vector3.new(0, 200, 0)
-        teleportState.isTeleporting = true
+        isTeleporting = true
+        -- First teleport to door
+        root.CFrame = CFrame.new(door)
+        -- Then teleport to sky after a brief delay
+        task.wait(0.1)
+        root.CFrame = CFrame.new(door.X, door.Y + 200, door.Z)
     end
 end
 
 local function teleportToGround()
     if not root then updateCharacter() end
-    if not root then return end
-    
-    if teleportState.originalPosition then
-        TweenService:Create(root, TweenInfo.new(1.2), {CFrame = CFrame.new(teleportState.originalPosition)}):Play()
-    else
-        root.CFrame = root.CFrame - Vector3.new(0, 50, 0)
+    if root then
+        isTeleporting = false
+        local currentPos = root.Position
+        root.CFrame = CFrame.new(currentPos.X, currentPos.Y - 50, currentPos.Z)
     end
-    
-    teleportState.isTeleporting = false
-    teleportState.originalPosition = nil
 end
 
--- COMBAT FUNCTIONS
+-- COMBAT / PLAYER STATE FUNCTIONS
 function setGodMode(on)
     if not humanoid then updateCharacter() end
     if not humanoid then return end
@@ -253,7 +241,7 @@ end
 local aimbotRange = 100
 
 local function getClosestAimbotTarget()
-    if not root then return nil
+    if not root then return nil end
 
     local closestPlayer, shortestDist = nil, aimbotRange
     
@@ -349,7 +337,7 @@ local function toggleESP(state)
     end
 end
 
--- SERVER FUNCTIONS
+-- WORLD / SERVER FUNCTIONS
 local function serverHop()
     local placeId = game.PlaceId
     local servers = {}
@@ -444,7 +432,7 @@ local function createTeleportGUI()
     createButtonHoverEffect(teleportButton)
 
     teleportButton.MouseButton1Click:Connect(function()
-        if teleportState.isTeleporting then
+        if isTeleporting then
             teleportToGround()
             teleportButton.Text = "SKY"
             TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = colors.button}):Play()
@@ -453,6 +441,7 @@ local function createTeleportGUI()
             teleportButton.Text = "GROUND"
             TweenService:Create(teleportButton, TweenInfo.new(0.2), {BackgroundColor3 = colors.toggleOn}):Play()
         end
+        isTeleporting = not isTeleporting
     end)
 end
 
@@ -629,6 +618,7 @@ local function createV1Menu()
     end
     
     -- CREATE UI ELEMENTS
+    -- Player Settings
     createCategory("PLAYER SETTINGS")
     createToggleButton("Godmode", contentFrame, setGodMode)
     createToggleButton("Aimbot", contentFrame, toggleAimbot)
@@ -636,10 +626,12 @@ local function createV1Menu()
     createToggleButton("Jump Boost", contentFrame, toggleJumpBoost)
     createToggleButton("Speed Boost", contentFrame, toggleSpeedBoost)
 
+    -- Visual Settings
     createCategory("VISUALS")
     createToggleButton("ESP", contentFrame, toggleESP)
     createToggleButton("Invisible", contentFrame, setInvisible)
 
+    -- Teleport Settings
     createCategory("TELEPORT")
     createOneShotButton("Toggle Teleport", contentFrame, function()
         if teleportGui then
@@ -652,9 +644,11 @@ local function createV1Menu()
         end
     end)
     
+    -- Server Settings
     createCategory("SERVER")
     createOneShotButton("Server Hop", contentFrame, serverHop)
     
+    -- Initial animation
     mainFrame.Position = UDim2.new(0.05, 0, 0, -400)
     TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0.05, 0, 0.5, -175)}):Play()
 end
