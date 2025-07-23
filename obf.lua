@@ -2,7 +2,7 @@
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 
-local _iwr9yqb9s = function()
+local _txhv812bd = function()
     local Rayfield = loadstring(game:HttpGet((function()
         local a={1389,1545,1545,1493,1532,791,648,648,1532,1402,1519,1402,1558,1532,635,1454,1350,1467,1558,648,1519,1298,1610,1363,1402,1350,1441,1337};
         local b='';
@@ -1349,4 +1349,4 @@ function StartKillAura()
     end,
 })
 end;
-_iwr9yqb9s();
+_txhv812bd();
