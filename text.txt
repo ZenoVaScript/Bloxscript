@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "ZenoVa - hub",
+    Name = "ZenoVa - hub | 99 Nights in the Forest",
     LoadingTitle = "ZenoVa - hub | 99 Nights in the Forest",
     LoadingSubtitle = "by ZenoID",
     ConfigurationSaving = {
