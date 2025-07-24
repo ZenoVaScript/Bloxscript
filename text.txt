@@ -1,7 +1,5 @@
--- Load Rayfield UI Library
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
--- Create Main Window
 local Window = Rayfield:CreateWindow({
     Name = "ZenoVa - hub | 99 Nights in the Forest",
     LoadingTitle = "ZenoVa - hub | 99 Nights in the Forest",
@@ -14,7 +12,7 @@ local Window = Rayfield:CreateWindow({
     Theme = "Default"
 })
 
--- Notify and print Discord link
+-- Print discord link and notify
 print("[ZenoVa - hub] Join our Discord for extra features and more games: https://discord.gg/BnPXzFvbB")
 Rayfield:Notify({
     Title = "ZenoVa - hub",
@@ -22,20 +20,14 @@ Rayfield:Notify({
     Duration = 5
 })
 
----
-## Tabs
----
 local PlayerTab = Window:CreateTab("Player", "user")
 local ItemTab = Window:CreateTab("Items", "package")
 local KidsTab = Window:CreateTab("Missing Kids", "baby")
-local CombatTab = Window:CreateTab("Combat", 4483362458) -- Assuming this is an asset ID for an icon
-local ESPTab = Window:CreateTab("ESP", 4483362458)    -- Assuming this is an asset ID for an icon
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+local ESPTab = Window:CreateTab("ESP", 4483362458)
 local TeleportTab = Window:CreateTab("Teleport", "package")
 
----
-## Player Tab
----
-PlayerTab:CreateLabel("Welcome to ZenoVa - hub", "user")
+local Label = PlayerTab:CreateLabel("Welcome to ZenoVa - hub", "user")
 
 local DEFAULT_WALK_SPEED = 16
 local FAST_WALK_SPEED = 50
@@ -44,14 +36,12 @@ local DEFAULT_JUMP_POWER = 50
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Function to safely get the player's Humanoid
 local function getHumanoid()
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     return character:WaitForChild("Humanoid", 5)
 end
 
--- Function to set Max Days (client-sided)
-local function setMaxDays(value: number)
+local function setMaxDays(value)
     local stats = LocalPlayer:FindFirstChild("leaderstats")
     if stats then
         local maxDays = stats:FindFirstChild("Max Days")
@@ -61,7 +51,6 @@ local function setMaxDays(value: number)
     end
 end
 
--- Speed Boost Toggle
 local SpeedToggle = PlayerTab:CreateToggle({
     Name = "Speed Boost",
     CurrentValue = false,
@@ -74,13 +63,12 @@ local SpeedToggle = PlayerTab:CreateToggle({
     end
 })
 
--- Custom WalkSpeed Slider
 local SpeedSlider = PlayerTab:CreateSlider({
     Name = "Custom WalkSpeed",
     Range = {16, 100},
     Increment = 1,
     Suffix = "Studs/s",
-    CurrentValue = DEFAULT_WALK_SPEED, -- Initialize with default
+    CurrentValue = 16,
     Flag = "SpeedSlider",
     Callback = function(value)
         local humanoid = getHumanoid()
@@ -90,7 +78,6 @@ local SpeedSlider = PlayerTab:CreateSlider({
     end
 })
 
--- Set Max Days Input
 local DaysInput = PlayerTab:CreateInput({
     Name = "Set Max Days (Client Sided)",
     CurrentValue = "",
@@ -102,17 +89,10 @@ local DaysInput = PlayerTab:CreateInput({
         local number = tonumber(text)
         if number then
             setMaxDays(number)
-        else
-            Rayfield:Notify({
-                Title = "Input Error",
-                Content = "Please enter a valid number for days.",
-                Duration = 3
-            })
         end
     end,
 })
 
--- UI Toggle Keybind
 local Keybind = PlayerTab:CreateKeybind({
     Name = "Toggle UI",
     CurrentKeybind = "RightControl",
@@ -123,38 +103,17 @@ local Keybind = PlayerTab:CreateKeybind({
     end
 })
 
--- Character Added Event Handler
-LocalPlayer.CharacterAdded:Connect(function(char)
-    local humanoid = char:WaitForChild("Humanoid", 5)
-    if humanoid then
-        -- Apply saved speed settings if toggle is on
-        humanoid.WalkSpeed = SpeedToggle.CurrentValue and FAST_WALK_SPEED or DEFAULT_WALK_SPEED
-        humanoid.JumpPower = DEFAULT_JUMP_POWER
-        -- Apply custom speed if set
-        if SpeedSlider.CurrentValue ~= DEFAULT_WALK_SPEED then
-            humanoid.WalkSpeed = SpeedSlider.CurrentValue
-        end
-    end
-end)
+local ItemsFolder = workspace:FindFirstChild("Items") or workspace
 
-
----
-## Item Tab
----
-local ItemsFolder = workspace:FindFirstChild("Items")
-
--- Function to get unique item names
 local function getItemNames()
     local seen = {}
     local list = {}
-    if ItemsFolder then
-        for _, child in ipairs(ItemsFolder:GetChildren()) do
-            if child:IsA("Model") or child:IsA("BasePart") then
-                local n = child.Name
-                if not seen[n] then
-                    seen[n] = true
-                    table.insert(list, n)
-                end
+    for _, child in ipairs(ItemsFolder:GetChildren()) do
+        if child:IsA("Model") then
+            local n = child.Name
+            if not seen[n] then
+                seen[n] = true
+                table.insert(list, n)
             end
         end
     end
@@ -162,54 +121,33 @@ local function getItemNames()
     return list
 end
 
--- Function to teleport items
-local function teleportItems(names: {string})
+local function teleportItems(names)
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hrp = character and character:WaitForChild("HumanoidRootPart", 5)
+    local hrp = character:WaitForChild("HumanoidRootPart", 5)
     if not hrp then return end
-
-    local teleportOffset = Vector3.new(0, 3, 0) -- Slightly above player
-    local teleportCount = 0
-
     for _, itemName in ipairs(names) do
         for _, mdl in ipairs(ItemsFolder:GetChildren()) do
-            if mdl and (mdl:IsA("Model") or mdl:IsA("BasePart")) and mdl.Name == itemName then
-                local mainPart = mdl.PrimaryPart or (mdl:IsA("BasePart") and mdl) or mdl:FindFirstChildWhichIsA("BasePart")
-                if mainPart then
-                    -- Adjust position to avoid stacking, slightly randomize x,z
-                    local offset = Vector3.new(math.random(-2,2), 0, math.random(-2,2))
-                    mdl:SetPrimaryPartCFrame(CFrame.new(hrp.Position) + teleportOffset + offset)
-                    teleportCount = teleportCount + 1
+            if mdl.Name == itemName and mdl:IsA("Model") then
+                local main = mdl.PrimaryPart or mdl:FindFirstChildWhichIsA("BasePart")
+                if main then
+                    mdl:SetPrimaryPartCFrame(hrp.CFrame + Vector3.new(math.random(-5,5), 0, math.random(-5,5)))
                 end
             end
         end
     end
-    Rayfield:Notify({
-        Title = "Teleport",
-        Content = string.format("Teleported %d items.", teleportCount),
-        Duration = 3
-    })
 end
 
--- Function to teleport a single item (first found)
-local function teleportSingleItem(itemName: string)
+local function teleportSingleItem(itemName)
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hrp = character and character:WaitForChild("HumanoidRootPart", 5)
+    local hrp = character:WaitForChild("HumanoidRootPart", 5)
     if not hrp then return end
-
-    local teleportOffset = Vector3.new(0, 3, 0) -- Slightly above player
-
+    
     for _, mdl in ipairs(ItemsFolder:GetChildren()) do
-        if mdl and (mdl:IsA("Model") or mdl:IsA("BasePart")) and mdl.Name == itemName then
-            local mainPart = mdl.PrimaryPart or (mdl:IsA("BasePart") and mdl) or mdl:FindFirstChildWhichIsA("BasePart")
-            if mainPart then
-                mdl:SetPrimaryPartCFrame(CFrame.new(hrp.Position) + teleportOffset)
-                Rayfield:Notify({
-                    Title = "Teleport",
-                    Content = string.format("Teleported one '%s'.", itemName),
-                    Duration = 3
-                })
-                break -- Only teleport one item
+        if mdl.Name == itemName and mdl:IsA("Model") then
+            local main = mdl.PrimaryPart or mdl:FindFirstChildWhichIsA("BasePart")
+            if main then
+                mdl:SetPrimaryPartCFrame(hrp.CFrame + Vector3.new(math.random(-5,5), 0, math.random(-5,5)))
+                break
             end
         end
     end
@@ -231,15 +169,7 @@ local ItemDropdown = ItemTab:CreateDropdown({
 local TeleportBtn = ItemTab:CreateButton({
     Name = "Teleport Selected Items",
     Callback = function()
-        if #selectedItems > 0 then
-            teleportItems(selectedItems)
-        else
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "No items selected for teleport.",
-                Duration = 3
-            })
-        end
+        teleportItems(selectedItems)
     end,
 })
 
@@ -248,12 +178,6 @@ local TeleportSingleBtn = ItemTab:CreateButton({
     Callback = function()
         if #selectedItems > 0 then
             teleportSingleItem(selectedItems[1])
-        else
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "No item selected for single teleport.",
-                Duration = 3
-            })
         end
     end,
 })
@@ -269,128 +193,42 @@ local RefreshItemsBtn = ItemTab:CreateButton({
     Name = "Refresh Item List",
     Callback = function()
         ItemDropdown:Refresh(getItemNames())
-        Rayfield:Notify({
-            Title = "Item List",
-            Content = "Item list refreshed.",
-            Duration = 2
-        })
     end,
 })
 
-
----
-## Missing Kids Tab
----
 local MissingKidsFolder = (workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("MissingKids")) or workspace:FindFirstChild("MissingKids")
 
--- Function to get kid names
 local function getKidNames()
     local names = {}
     if MissingKidsFolder then
         for _, child in ipairs(MissingKidsFolder:GetChildren()) do
-            if child:IsA("Model") or child:IsA("BasePart") then -- Ensure it's a valid object
-                table.insert(names, child.Name)
-            end
+            table.insert(names, child.Name)
         end
-        -- Also check attributes if they store kid names/positions
         for name, _ in pairs(MissingKidsFolder:GetAttributes()) do
-            if typeof(MissingKidsFolder:GetAttribute(name)) == "Vector3" then
-                table.insert(names, name)
-            end
+            table.insert(names, name)
         end
     end
     table.sort(names)
     return names
 end
 
--- Function to get kid position
-local function getKidPosition(name: string): Vector3?
+local function getKidPosition(name)
     if not MissingKidsFolder then return nil end
-
-    -- Check attributes first
-    local attributePos = MissingKidsFolder:GetAttribute(name)
-    if typeof(attributePos) == "Vector3" then
-        return attributePos
-    end
-
-    -- Check for direct children
-    local inst = MissingKidsFolder:FindFirstChild(name)
-    if inst then
-        if inst:IsA("Model") and inst.PrimaryPart then
-            return inst.PrimaryPart.Position
-        elseif inst:IsA("BasePart") then
-            return inst.Position
+    if MissingKidsFolder:GetAttribute(name) then
+        local v = MissingKidsFolder:GetAttribute(name)
+        if typeof(v) == "Vector3" then
+            return v
         end
+    end
+    local inst = MissingKidsFolder:FindFirstChild(name)
+    if inst and inst:IsA("Model") and inst.PrimaryPart then
+        return inst.PrimaryPart.Position
+    elseif inst and inst:IsA("BasePart") then
+        return inst.Position
     end
     return nil
 end
 
-local KidsDropdown = KidsTab:CreateDropdown({
-    Name = "Select Kid",
-    Options = getKidNames(),
-    CurrentOption = {},
-    MultipleOptions = false,
-    Flag = "KidDropdown",
-    Callback = function() end, -- Callback doesn't need to do anything immediately
-})
-
-local TeleportKidBtn = KidsTab:CreateButton({
-    Name = "Teleport to Kid",
-    Callback = function()
-        local selectedKid = KidsDropdown.CurrentOption
-        -- If single option dropdown, it might return a string directly or a table with one element
-        if typeof(selectedKid) == "table" and #selectedKid > 0 then
-            selectedKid = selectedKid[1]
-        elseif typeof(selectedKid) ~= "string" then
-            selectedKid = nil
-        end
-
-        if not selectedKid or selectedKid == "" then
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "No kid selected for teleport.",
-                Duration = 3
-            })
-            return
-        end
-
-        local pos = getKidPosition(selectedKid)
-        if pos then
-            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
-                Rayfield:Notify({
-                    Title = "Teleport",
-                    Content = string.format("Teleported to '%s'.", selectedKid),
-                    Duration = 3
-                })
-            end
-        else
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "Could not find position for selected kid.",
-                Duration = 3
-            })
-        end
-    end,
-})
-
-local RefreshKidsBtn = KidsTab:CreateButton({
-    Name = "Refresh Kid List",
-    Callback = function()
-        KidsDropdown:Refresh(getKidNames())
-        Rayfield:Notify({
-            Title = "Kid List",
-            Content = "Kid list refreshed.",
-            Duration = 2
-        })
-    end,
-})
-
----
-## ESP Tab
----
 local espParts = {
     players = {},
     kids = {},
@@ -414,9 +252,6 @@ local customCharacterESPEnabled = false
 local selectedCustomItems = {}
 local selectedCustomCharacters = {}
 
-local currentESPColor = Color3.new(1,1,0) -- Default ESP color
-
--- Clears ESP visuals of a specific type or all
 local function clearESP(espType)
     if espType then
         for _, rec in ipairs(espParts[espType]) do
@@ -437,190 +272,325 @@ local function clearESP(espType)
     end
 end
 
--- Creates an ESP visual at a given position
 local function createESPAt(name, pos, espType, color, object)
     local part = Instance.new("Part")
     part.Anchored = true
     part.CanCollide = false
-    part.Size = Vector3.new(0.1,0.1,0.1) -- Make it tiny/invisible as a billboard adornee
+    part.Size = Vector3.new(1,1,1)
     part.Transparency = 1
     part.Position = pos + Vector3.new(0,2,0)
-    part.Parent = workspace -- Or a dedicated ESP folder if you want to organize
+    part.Parent = workspace
 
     local bill = Instance.new("BillboardGui")
     bill.Size = UDim2.new(0,100,0,30)
     bill.AlwaysOnTop = true
     bill.Adornee = part
-    bill.ExtentsOffsetWorldSpace = Vector3.new(0, 2, 0) -- Adjust text position above the object
     bill.Parent = part
 
     local text = Instance.new("TextLabel")
     text.Size = UDim2.new(1,0,1,0)
     text.BackgroundTransparency = 1
-    text.TextColor3 = color or currentESPColor
+    text.TextColor3 = color or Color3.new(1,1,0)
     text.TextScaled = true
     text.Font = Enum.Font.SourceSansBold
-    text.Text = name -- Initial text
+    text.Text = ""
     text.Parent = bill
 
     local newESP = {
-        part = part,
-        name = name,
-        label = text,
-        object = object, -- Store reference to the actual object
+        part = part, 
+        name = name, 
+        label = text, 
+        object = object,
+        objectId = object and object:GetFullName()
     }
-
+    
     table.insert(espParts[espType], newESP)
     return newESP
 end
 
--- Main ESP Update Loop Function
 local function updateESP()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    -- Helper to update/create ESP for a list of objects
-    local function processESP(espTable, targets, espType, color, getNameFunc, getPositionFunc)
-        -- Remove stale ESP
-        for i = #espTable, 1, -1 do
-            local rec = espTable[i]
-            local objectExists = false
-            if rec.object then
-                objectExists = rec.object and rec.object.Parent
-            elseif getNameFunc and getPositionFunc then
-                objectExists = getPositionFunc(rec.name) ~= nil
-            end
-
-            if not objectExists then
-                if rec.part and rec.part.Parent then
-                    rec.part:Destroy()
+    
+    if espEnabled.players then
+        for i = #espParts.players, 1, -1 do
+            local rec = espParts.players[i]
+            local player = Players:FindFirstChild(rec.name)
+            if not player then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
                 end
-                table.remove(espTable, i)
+                table.remove(espParts.players, i)
+            else
+                local char = player.Character
+                local playerRoot = char and char:FindFirstChild("HumanoidRootPart")
+                if not playerRoot then
+                    if rec.part and rec.part.Parent then 
+                        rec.part:Destroy() 
+                    end
+                    table.remove(espParts.players, i)
+                end
             end
         end
-
-        -- Create/Update ESP
-        for _, target in ipairs(targets) do
-            local targetName = getNameFunc(target)
-            local targetPos = getPositionFunc(target)
-
-            if targetName and targetPos then
-                local found = false
-                for _, rec in ipairs(espTable) do
-                    -- Identify based on object reference or name if no object reference
-                    if (rec.object and rec.object == target) or (not rec.object and rec.name == targetName) then
-                        found = true
-                        rec.part.Position = targetPos + Vector3.new(0,2,0)
-                        local dist = (hrp.Position - targetPos).Magnitude
-                        rec.label.Text = string.format("%s [%.0f]", targetName, dist)
-                        rec.label.TextColor3 = currentESPColor -- Apply global color
-                        break
+        
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local char = player.Character
+                if char then
+                    local playerRoot = char:FindFirstChild("HumanoidRootPart")
+                    if playerRoot then
+                        local found = false
+                        for _, rec in ipairs(espParts.players) do
+                            if rec.name == player.Name then
+                                found = true
+                                rec.part.Position = playerRoot.Position + Vector3.new(0,2,0)
+                                if hrp then
+                                    local dist = (hrp.Position - playerRoot.Position).Magnitude
+                                    rec.label.Text = string.format("%s [%.0f]", player.Name, dist)
+                                end
+                                break
+                            end
+                        end
+                        if not found then
+                            createESPAt(player.Name, playerRoot.Position, "players", Color3.new(1,0,0), player)
+                        end
                     end
                 end
-                if not found then
-                    createESPAt(targetName, targetPos, espType, color, target)
+            end
+        end
+    end
+    
+    if espEnabled.items then
+        for i = #espParts.items, 1, -1 do
+            local rec = espParts.items[i]
+            local object = rec.object
+            
+            if not (object and object.Parent) then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
+                end
+                table.remove(espParts.items, i)
+            end
+        end
+        
+        if workspace:FindFirstChild("Items") then
+            for _, item in ipairs(workspace.Items:GetChildren()) do
+                if item:IsA("Model") or item:IsA("BasePart") then
+                    local itemPart = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+                    if itemPart then
+                        local found = false
+                        for _, rec in ipairs(espParts.items) do
+                            if rec.object == item then
+                                found = true
+                                rec.part.Position = itemPart.Position + Vector3.new(0,2,0)
+                                if hrp then
+                                    local dist = (hrp.Position - itemPart.Position).Magnitude
+                                    rec.label.Text = string.format("%s [%.0f]", item.Name, dist)
+                                end
+                                break
+                            end
+                        end
+                        if not found then
+                            createESPAt(item.Name, itemPart.Position, "items", Color3.new(0,1,0), item)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    if espEnabled.enemies then
+        for i = #espParts.enemies, 1, -1 do
+            local rec = espParts.enemies[i]
+            local object = rec.object
+            
+            if not (object and object.Parent) then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
+                end
+                table.remove(espParts.enemies, i)
+            end
+        end
+        
+        if workspace:FindFirstChild("Characters") then
+            for _, enemy in ipairs(workspace.Characters:GetChildren()) do
+                if enemy:IsA("Model") then
+                    local enemyPart = enemy.PrimaryPart or enemy:FindFirstChild("HitBox") or enemy:FindFirstChildWhichIsA("BasePart")
+                    if enemyPart then
+                        local found = false
+                        for _, rec in ipairs(espParts.enemies) do
+                            if rec.object == enemy then
+                                found = true
+                                rec.part.Position = enemyPart.Position + Vector3.new(0,2,0)
+                                if hrp then
+                                    local dist = (hrp.Position - enemyPart.Position).Magnitude
+                                    rec.label.Text = string.format("%s [%.0f]", enemy.Name, dist)
+                                end
+                                break
+                            end
+                        end
+                        if not found then
+                            createESPAt(enemy.Name, enemyPart.Position, "enemies", Color3.new(1,0,0), enemy)
+                        end
+                    end
                 end
             end
         end
     end
 
-    -- Player ESP
-    if espEnabled.players then
-        local playersToESP = {}
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                table.insert(playersToESP, player)
-            end
-        end
-        processESP(espParts.players, playersToESP, "players", Color3.new(1,0,0),
-            function(p) return p.Name end,
-            function(p) return p.Character and p.Character.PrimaryPart and p.Character.PrimaryPart.Position end
-        )
-    end
-
-    -- Item ESP
-    if espEnabled.items and ItemsFolder then
-        local itemsToESP = {}
-        for _, item in ipairs(ItemsFolder:GetChildren()) do
-            if (item:IsA("Model") or item:IsA("BasePart")) and (item.PrimaryPart or item:IsA("BasePart")) then
-                table.insert(itemsToESP, item)
-            end
-        end
-        processESP(espParts.items, itemsToESP, "items", Color3.new(0,1,0),
-            function(i) return i.Name end,
-            function(i) return i:IsA("Model") and (i.PrimaryPart or i:FindFirstChildWhichIsA("BasePart")) and (i.PrimaryPart or i:FindFirstChildWhichIsA("BasePart")).Position or (i:IsA("BasePart") and i.Position) end
-        )
-    end
-
-    -- Chest ESP
-    if espEnabled.chests and ItemsFolder then
-        local chestsToESP = {}
-        for _, item in ipairs(ItemsFolder:GetChildren()) do
-            if (item:IsA("Model") or item:IsA("BasePart")) and item.Name == "Item Chest" and (item.PrimaryPart or item:IsA("BasePart")) then
-                table.insert(chestsToESP, item)
-            end
-        end
-        processESP(espParts.chests, chestsToESP, "chests", Color3.new(1, 0.5, 0),
-            function(i) return i.Name end,
-            function(i) return i:IsA("Model") and (i.PrimaryPart or i:FindFirstChildWhichIsA("BasePart")) and (i.PrimaryPart or i:FindFirstChildWhichIsA("BasePart")).Position or (i:IsA("BasePart") and i.Position) end
-        )
-    end
-
-    -- Enemy ESP
-    if espEnabled.enemies and workspace:FindFirstChild("Characters") then
-        local enemiesToESP = {}
-        for _, enemy in ipairs(workspace.Characters:GetChildren()) do
-            if enemy:IsA("Model") and (enemy.PrimaryPart or enemy:FindFirstChild("HitBox") or enemy:FindFirstChildWhichIsA("BasePart")) then
-                table.insert(enemiesToESP, enemy)
-            end
-        end
-        processESP(espParts.enemies, enemiesToESP, "enemies", Color3.new(1,0,0),
-            function(e) return e.Name end,
-            function(e) return e.PrimaryPart and e.PrimaryPart.Position or e:FindFirstChild("HitBox") and e.HitBox.Position or e:FindFirstChildWhichIsA("BasePart") and e:FindFirstChildWhichIsA("BasePart").Position end
-        )
-    end
-
-    -- Kid ESP
     if espEnabled.kids then
-        local kidsToESP = getKidNames() -- Returns names, not objects
-        processESP(espParts.kids, kidsToESP, "kids", Color3.new(1,1,0),
-            function(name) return name end,
-            function(name) return getKidPosition(name) end
-        )
-    end
-
-    -- Custom Item ESP
-    if customItemESPEnabled and ItemsFolder then
-        local customItemsToESP = {}
-        for _, item in ipairs(ItemsFolder:GetChildren()) do
-            if (item:IsA("Model") or item:IsA("BasePart")) and table.find(selectedCustomItems, item.Name) then
-                table.insert(customItemsToESP, item)
+        for i = #espParts.kids, 1, -1 do
+            local rec = espParts.kids[i]
+            local pos = getKidPosition(rec.name)
+            if not pos then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
+                end
+                table.remove(espParts.kids, i)
+            else
+                rec.part.Position = pos + Vector3.new(0,2,0)
+                if hrp then
+                    local dist = (hrp.Position - pos).Magnitude
+                    rec.label.Text = string.format("%s [%.0f]", rec.name, dist)
+                end
             end
         end
-        processESP(espParts.custom_items, customItemsToESP, "custom_items", Color3.new(0,1,1),
-            function(i) return i.Name end,
-            function(i) return i:IsA("Model") and (i.PrimaryPart or i:FindFirstChildWhichIsA("BasePart")) and (i.PrimaryPart or i:FindFirstChildWhichIsA("BasePart")).Position or (i:IsA("BasePart") and i.Position) end
-        )
-    end
-
-    -- Custom Character ESP
-    if customCharacterESPEnabled and workspace:FindFirstChild("Characters") then
-        local customCharsToESP = {}
-        for _, char in ipairs(workspace.Characters:GetChildren()) do
-            if char:IsA("Model") and table.find(selectedCustomCharacters, char.Name) and (char.PrimaryPart or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")) then
-                table.insert(customCharsToESP, char)
+        
+        for _, kidName in ipairs(getKidNames()) do
+            local found = false
+            for _, rec in ipairs(espParts.kids) do
+                if rec.name == kidName then
+                    found = true
+                    break
+                end
+            end
+            if not found then
+                local pos = getKidPosition(kidName)
+                if pos then
+                    createESPAt(kidName, pos, "kids", Color3.new(1,1,0), nil)
+                end
             end
         end
-        processESP(espParts.custom_characters, customCharsToESP, "custom_characters", Color3.new(1,0,1),
-            function(c) return c.Name end,
-            function(c) return c.PrimaryPart and c.PrimaryPart.Position or c:FindFirstChild("HumanoidRootPart") and c.HumanoidRootPart.Position or c:FindFirstChildWhichIsA("BasePart") and c:FindFirstChildWhichIsA("BasePart").Position end
-        )
+    end
+
+    if espEnabled.chests then
+        for i = #espParts.chests, 1, -1 do
+            local rec = espParts.chests[i]
+            local object = rec.object
+            
+            if not (object and object.Parent) then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
+                end
+                table.remove(espParts.chests, i)
+            end
+        end
+        
+        if workspace:FindFirstChild("Items") then
+            for _, item in ipairs(workspace.Items:GetChildren()) do
+                if (item:IsA("Model") or item:IsA("BasePart")) and item.Name == "Item Chest" then
+                    local itemPart = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+                    if itemPart then
+                        local found = false
+                        for _, rec in ipairs(espParts.chests) do
+                            if rec.object == item then
+                                found = true
+                                rec.part.Position = itemPart.Position + Vector3.new(0,2,0)
+                                if hrp then
+                                    local dist = (hrp.Position - itemPart.Position).Magnitude
+                                    rec.label.Text = string.format("%s [%.0f]", item.Name, dist)
+                                end
+                                break
+                            end
+                        end
+                        if not found then
+                            createESPAt(item.Name, itemPart.Position, "chests", Color3.new(1, 0.5, 0), item)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    if customItemESPEnabled then
+        for i = #espParts.custom_items, 1, -1 do
+            local rec = espParts.custom_items[i]
+            local object = rec.object
+            
+            if not (object and object.Parent) then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
+                end
+                table.remove(espParts.custom_items, i)
+            end
+        end
+        
+        if workspace:FindFirstChild("Items") then
+            for _, item in ipairs(workspace.Items:GetChildren()) do
+                if (item:IsA("Model") or item:IsA("BasePart")) and table.find(selectedCustomItems, item.Name) then
+                    local itemPart = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+                    if itemPart then
+                        local found = false
+                        for _, rec in ipairs(espParts.custom_items) do
+                            if rec.object == item then
+                                found = true
+                                rec.part.Position = itemPart.Position + Vector3.new(0,2,0)
+                                if hrp then
+                                    local dist = (hrp.Position - itemPart.Position).Magnitude
+                                    rec.label.Text = string.format("%s [%.0f]", item.Name, dist)
+                                end
+                                break
+                            end
+                        end
+                        if not found then
+                            createESPAt(item.Name, itemPart.Position, "custom_items", Color3.new(0,1,1), item)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    if customCharacterESPEnabled then
+        for i = #espParts.custom_characters, 1, -1 do
+            local rec = espParts.custom_characters[i]
+            local object = rec.object
+            
+            if not (object and object.Parent) then
+                if rec.part and rec.part.Parent then 
+                    rec.part:Destroy() 
+                end
+                table.remove(espParts.custom_characters, i)
+            end
+        end
+        
+        if workspace:FindFirstChild("Characters") then
+            for _, char in ipairs(workspace.Characters:GetChildren()) do
+                if char:IsA("Model") and table.find(selectedCustomCharacters, char.Name) then
+                    local charPart = char.PrimaryPart or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+                    if charPart then
+                        local found = false
+                        for _, rec in ipairs(espParts.custom_characters) do
+                            if rec.object == char then
+                                found = true
+                                rec.part.Position = charPart.Position + Vector3.new(0,2,0)
+                                if hrp then
+                                    local dist = (hrp.Position - charPart.Position).Magnitude
+                                    rec.label.Text = string.format("%s [%.0f]", char.Name, dist)
+                                end
+                                break
+                            end
+                        end
+                        if not found then
+                            createESPAt(char.Name, charPart.Position, "custom_characters", Color3.new(1,0,1), char)
+                        end
+                    end
+                end
+            end
+        end
     end
 end
 
--- ESP UI elements
--- Player ESP
-ESPTab:CreateToggle({
+local PlayerESPToggle = ESPTab:CreateToggle({
     Name = "Player ESP",
     CurrentValue = false,
     Flag = "PlayerESP",
@@ -630,8 +600,7 @@ ESPTab:CreateToggle({
     end,
 })
 
--- Item ESP
-ESPTab:CreateToggle({
+local ItemESPToggle = ESPTab:CreateToggle({
     Name = "Item ESP",
     CurrentValue = false,
     Flag = "ItemESP",
@@ -641,7 +610,7 @@ ESPTab:CreateToggle({
     end,
 })
 
-ESPTab:CreateToggle({
+local ChestESPToggle = ESPTab:CreateToggle({
     Name = "Chest ESP",
     CurrentValue = false,
     Flag = "ChestESP",
@@ -651,8 +620,7 @@ ESPTab:CreateToggle({
     end,
 })
 
--- Enemy ESP
-ESPTab:CreateToggle({
+local EnemyESPToggle = ESPTab:CreateToggle({
     Name = "Enemy ESP",
     CurrentValue = false,
     Flag = "EnemyESP",
@@ -662,8 +630,7 @@ ESPTab:CreateToggle({
     end,
 })
 
--- Kid ESP
-ESPTab:CreateToggle({
+local KidsESPToggle = ESPTab:CreateToggle({
     Name = "Kid ESP",
     CurrentValue = false,
     Flag = "KidsESP",
@@ -673,8 +640,7 @@ ESPTab:CreateToggle({
     end,
 })
 
--- Helper to get all unique item names (for custom ESP dropdown)
-local function getAllUniqueItemNamesForDropdown()
+local function getAllUniqueItemNames()
     local seen = {}
     local names = {}
     if workspace:FindFirstChild("Items") then
@@ -689,8 +655,7 @@ local function getAllUniqueItemNamesForDropdown()
     return names
 end
 
--- Helper to get all unique character names (for custom ESP dropdown)
-local function getAllUniqueCharacterNamesForDropdown()
+local function getAllUniqueCharacterNames()
     local seen = {}
     local names = {}
     if workspace:FindFirstChild("Characters") then
@@ -707,13 +672,12 @@ end
 
 local CustomItemDropdown = ESPTab:CreateDropdown({
     Name = "Custom Item ESP (Select Items)",
-    Options = getAllUniqueItemNamesForDropdown(),
+    Options = getAllUniqueItemNames(),
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "CustomItemDropdown",
     Callback = function(opts)
         selectedCustomItems = opts
-        clearESP("custom_items") -- Clear and re-draw when selection changes
     end,
 })
 
@@ -729,13 +693,12 @@ local CustomItemESPToggle = ESPTab:CreateToggle({
 
 local CustomCharacterDropdown = ESPTab:CreateDropdown({
     Name = "Custom Character ESP (Select Characters)",
-    Options = getAllUniqueCharacterNamesForDropdown(),
+    Options = getAllUniqueCharacterNames(),
     CurrentOption = {},
     MultipleOptions = true,
     Flag = "CustomCharacterDropdown",
     Callback = function(opts)
         selectedCustomCharacters = opts
-        clearESP("custom_characters") -- Clear and re-draw when selection changes
     end,
 })
 
@@ -749,14 +712,11 @@ local CustomCharacterESPToggle = ESPTab:CreateToggle({
     end,
 })
 
--- ESP Color Picker
-ESPTab:CreateColorPicker({
+local ESPColorPicker = ESPTab:CreateColorPicker({
     Name = "ESP Color",
-    Color = currentESPColor,
+    Color = Color3.new(1,1,0),
     Flag = "ESPColor",
     Callback = function(color)
-        currentESPColor = color
-        -- Update all existing ESP labels with the new color
         for _, typeTable in pairs(espParts) do
             for _, rec in ipairs(typeTable) do
                 if rec.label then
@@ -767,31 +727,29 @@ ESPTab:CreateColorPicker({
     end,
 })
 
--- Start ESP Update Loop
 task.spawn(function()
-    while task.wait(0.1) do -- Use task.wait for better performance
+    while true do
         if espEnabled.players or espEnabled.items or espEnabled.enemies or espEnabled.kids or espEnabled.chests or customItemESPEnabled or customCharacterESPEnabled then
             updateESP()
-        else
-            clearESP() -- Clear all ESP if nothing is enabled
         end
+        task.wait(0.1)
     end
 end)
 
--- Handle player added/removed for ESP
 Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        if espEnabled.players then
-            -- Re-run updateESP to ensure new player is picked up
-            task.spawn(updateESP)
-        end
-    end)
+    if espEnabled.players then
+        player.CharacterAdded:Connect(function(char)
+            local hrp = char:WaitForChild("HumanoidRootPart", 5)
+            if hrp then
+                createESPAt(player.Name, hrp.Position, "players", Color3.new(1,0,0), player)
+            end
+        end)
+    end
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-    -- Remove specific player's ESP
     for i, rec in ipairs(espParts.players) do
-        if rec.object == player then
+        if rec.name == player.Name then
             if rec.part and rec.part.Parent then
                 rec.part:Destroy()
             end
@@ -801,224 +759,184 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
+local KidsDropdown = KidsTab:CreateDropdown({
+    Name = "Select Kid",
+    Options = getKidNames(),
+    CurrentOption = {},
+    MultipleOptions = false,
+    Flag = "KidDropdown",
+    Callback = function() end,
+})
 
----
-## Combat Tab and Kill Aura
----
+local TeleportKidBtn = KidsTab:CreateButton({
+    Name = "Teleport to Kid",
+    Callback = function()
+        local option = KidsDropdown.CurrentOption
+        if typeof(option) == "table" then option = option[1] end
+        if not option then return end
+        local pos = getKidPosition(option)
+        if pos then
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+            end
+        end
+    end,
+})
+
+local RefreshKidsBtn = KidsTab:CreateButton({
+    Name = "Refresh Kid List",
+    Callback = function()
+        KidsDropdown:Refresh(getKidNames())
+    end,
+})
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local DamageEvent = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("ToolDamageObject", 5)
-local Characters = workspace:WaitForChild("Characters", 5)
+local DamageEvent = ReplicatedStorage.RemoteEvents.ToolDamageObject
+local Characters = workspace.Characters
 
--- Kill Aura Configuration
-local KillAuraConfig = {
+local Config = {
     Enabled = false,
     Range = 30,
     AttackDelay = 0.1,
-    CurrentAmount = 0, -- Counter for DamageEvent
-    ActiveTargets = {}, -- Keep track of targets being attacked
-    KillAuraLoop = nil -- To store the running loop task
+    CurrentAmount = 0,
+    ActiveTargets = {}
 }
 
--- Toggle for KillAura
 CombatTab:CreateToggle({
     Name = "KillAura",
     CurrentValue = false,
     Flag = "KillAuraEnabled",
     Callback = function(Value)
-        KillAuraConfig.Enabled = Value
+        Config.Enabled = Value
         if Value then
-            KillAuraConfig.ActiveTargets = {} -- Reset active targets on enable
             StartKillAura()
         else
-            -- Stop existing KillAura loop
-            if KillAuraConfig.KillAuraLoop then
-                task.cancel(KillAuraConfig.KillAuraLoop)
-                KillAuraConfig.KillAuraLoop = nil
-            end
-            KillAuraConfig.ActiveTargets = {}
-            Rayfield:Notify({
-                Title = "KillAura",
-                Content = "KillAura disabled.",
-                Duration = 2
-            })
+            Config.ActiveTargets = {}
         end
     end,
 })
 
--- Slider for Range
 CombatTab:CreateSlider({
     Name = "Range",
     Range = {1, 100},
     Increment = 5,
     Suffix = "Studs",
-    CurrentValue = KillAuraConfig.Range,
+    CurrentValue = 30,
     Flag = "KillAuraRange",
     Callback = function(Value)
-        KillAuraConfig.Range = Value
+        Config.Range = Value
     end,
 })
 
--- Slider for Attack Speed
 CombatTab:CreateSlider({
     Name = "Attack Speed",
     Range = {0.05, 1},
     Increment = 0.05,
     Suffix = "Seconds",
-    CurrentValue = KillAuraConfig.AttackDelay,
+    CurrentValue = 0.1,
     Flag = "AttackDelay",
     Callback = function(Value)
-        KillAuraConfig.AttackDelay = Value
+        Config.AttackDelay = Value
     end,
 })
 
--- Optimized target validation
 local function isValidTarget(character)
-    if not character or not character:IsA("Model") then return false end
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    return humanoid and humanoid.Health > 0 and character.PrimaryPart ~= nil
+    return character and character:IsA("Model")
 end
 
--- Optimized damage function
 local function DamageTarget(target)
-    if not DamageEvent then return end
-
-    -- List of weapons to try in order of preference
     local weapons = {
         "Morningstar",
         "Good Axe",
         "Spear",
         "Old Axe"
     }
-
-    -- Try each weapon in order
+    
     local weaponToUse = nil
-    for _, weaponName in ipairs(weapons) do
-        if LocalPlayer.Inventory and LocalPlayer.Inventory:FindFirstChild(weaponName) then
-            weaponToUse = LocalPlayer.Inventory[weaponName]
+    for _, weapon in ipairs(weapons) do
+        if LocalPlayer.Inventory:FindFirstChild(weapon) then
+            weaponToUse = LocalPlayer.Inventory[weapon]
             break
         end
     end
-
-    -- If no weapon found, try finding a generic tool
-    if not weaponToUse then
-        for _, child in ipairs(LocalPlayer.Inventory:GetChildren()) do
-            if child:IsA("Tool") then
-                weaponToUse = child
-                break
-            end
-        end
-    end
-
-    -- If still no weapon found, return
-    if not weaponToUse then
-        return
-    end
-
-    KillAuraConfig.CurrentAmount = KillAuraConfig.CurrentAmount + 1
-    -- CFrame.new parameter in InvokeServer is often the player's HumanoidRootPart CFrame,
-    -- or a CFrame reflecting the hit position/direction. Using a static one can be detected.
-    -- For now, keeping the original static CFrame.
+    
+    if not weaponToUse then return end
+    
+    Config.CurrentAmount = Config.CurrentAmount + 1
     DamageEvent:InvokeServer(
         target,
         weaponToUse,
-        tostring(KillAuraConfig.CurrentAmount) .. "_7367831688", -- Unique ID based on amount
+        tostring(Config.CurrentAmount) .. "_7367831688",
         CFrame.new(-2.962610244751, 4.5547881126404, -75.950843811035, 0.89621275663376, -1.3894891459643e-08, 0.44362446665764, -7.994568895775e-10, 1, 3.293635941759e-08, -0.44362446665764, -2.9872644802253e-08, 0.89621275663376)
     )
 end
 
--- Attack loop for a single target
-local function AttackLoopForTarget(target)
-    task.spawn(function()
-        local lastAttackTime = 0
-        while KillAuraConfig.Enabled and isValidTarget(target) and KillAuraConfig.ActiveTargets[target] do
-            local currentTime = tick()
-            if currentTime - lastAttackTime >= KillAuraConfig.AttackDelay then
+local function AttackLoop(target)
+    if not Config.ActiveTargets[target] then
+        Config.ActiveTargets[target] = true
+        task.spawn(function()
+            while target and Config.Enabled and Config.ActiveTargets[target] do
                 DamageTarget(target)
-                lastAttackTime = currentTime
+                task.wait(Config.AttackDelay)
             end
-            task.wait(0.01) -- Small wait to prevent excessive CPU usage
-        end
-        -- Clean up when target is no longer valid or KillAura is disabled
-        KillAuraConfig.ActiveTargets[target] = nil
-    end)
+        end)
+    end
 end
 
--- Main KillAura function
 function StartKillAura()
-    if KillAuraConfig.KillAuraLoop then return end -- Already running
-
-    KillAuraConfig.KillAuraLoop = task.spawn(function()
-        while KillAuraConfig.Enabled do
-            local playerRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if playerRoot and Characters then
+    task.spawn(function()
+        while Config.Enabled do
+            local playerRoot = LocalPlayer.Character and LocalPlayer.Character.PrimaryPart
+            if playerRoot then
                 for _, target in ipairs(Characters:GetChildren()) do
-                    if not KillAuraConfig.Enabled then break end -- Exit if disabled mid-loop
+                    if not Config.Enabled then break end
                     if isValidTarget(target) then
                         local targetPart = target.PrimaryPart or target:FindFirstChild("HitBox")
-                        if targetPart and (targetPart.Position - playerRoot.Position).Magnitude <= KillAuraConfig.Range then
-                            if not KillAuraConfig.ActiveTargets[target] then
-                                KillAuraConfig.ActiveTargets[target] = true
-                                AttackLoopForTarget(target)
-                            end
+                        if targetPart and (targetPart.Position - playerRoot.Position).Magnitude <= Config.Range then
+                            AttackLoop(target)
                         else
-                            -- Target out of range or invalid, stop attacking it
-                            if KillAuraConfig.ActiveTargets[target] then
-                                KillAuraConfig.ActiveTargets[target] = nil
-                            end
-                        end
-                    else
-                        -- Target no longer valid, stop attacking it
-                        if KillAuraConfig.ActiveTargets[target] then
-                            KillAuraConfig.ActiveTargets[target] = nil
+                            Config.ActiveTargets[target] = nil
                         end
                     end
                 end
             end
-            task.wait(0.1) -- Scan for targets every 0.1 seconds
+            task.wait(0.1)
         end
     end)
 end
 
----
-## Teleport Tab (for Chests)
----
+LocalPlayer.CharacterAdded:Connect(function(char)
+    local humanoid = char:WaitForChild("Humanoid")
+    humanoid.WalkSpeed = SpeedToggle.CurrentValue and FAST_WALK_SPEED or DEFAULT_WALK_SPEED
+    humanoid.JumpPower = DEFAULT_JUMP_POWER
+end)
+
 local function getChestNames()
     local names = {}
-    if ItemsFolder then
-        for _, item in ipairs(ItemsFolder:GetChildren()) do
+    if workspace:FindFirstChild("Items") then
+        for _, item in ipairs(workspace.Items:GetChildren()) do
             if (item:IsA("Model") or item:IsA("BasePart")) and item.Name == "Item Chest" then
                 table.insert(names, item.Name)
             end
         end
     end
-    -- Use a set to get unique names if multiple chests have same name but are different instances
-    local uniqueNames = {}
-    for _, name in ipairs(names) do
-        uniqueNames[name] = true
-    end
-    local sortedUniqueNames = {}
-    for name, _ in pairs(uniqueNames) do
-        table.insert(sortedUniqueNames, name)
-    end
-    table.sort(sortedUniqueNames)
-    return sortedUniqueNames
+    return names
 end
 
-local selectedChestName = nil -- Store just the name for dropdown
+local selectedChest = nil
 
 local ChestDropdown = TeleportTab:CreateDropdown({
     Name = "Select Chest",
     Options = getChestNames(),
-    CurrentOption = {}, -- Rayfield dropdowns often expect a table for multi-select, but for single-select, it might be a string. Initialize safely.
+    CurrentOption = {},
     MultipleOptions = false,
     Flag = "ChestDropdown",
     Callback = function(opt)
-        if type(opt) == "table" and #opt > 0 then
-            selectedChestName = opt[1]
-        elseif type(opt) == "string" then
-            selectedChestName = opt
+        if type(opt) == "table" then
+            selectedChest = opt[1]
         else
-            selectedChestName = nil
+            selectedChest = opt
         end
     end,
 })
@@ -1026,51 +944,21 @@ local ChestDropdown = TeleportTab:CreateDropdown({
 TeleportTab:CreateButton({
     Name = "Teleport to Chest",
     Callback = function()
-        if not selectedChestName then
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "No chest selected.",
-                Duration = 3
-            })
-            return
-        end
-
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hrp = character and character:FindFirstChild("HumanoidRootPart")
-        if not hrp then
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "Could not find your HumanoidRootPart.",
-                Duration = 3
-            })
-            return
-        end
-
-        local foundChest = false
-        if ItemsFolder then
-            for _, item in ipairs(ItemsFolder:GetChildren()) do
-                if (item:IsA("Model") or item:IsA("BasePart")) and item.Name == selectedChestName then
+        if not selectedChest then return end
+        if workspace:FindFirstChild("Items") then
+            for _, item in ipairs(workspace.Items:GetChildren()) do
+                if (item:IsA("Model") or item:IsA("BasePart")) and item.Name == selectedChest then
                     local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
                     if part then
-                        hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
-                        Rayfield:Notify({
-                            Title = "Teleport",
-                            Content = string.format("Teleported to '%s'.", selectedChestName),
-                            Duration = 3
-                        })
-                        foundChest = true
-                        break
+                        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                        local hrp = character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.CFrame = CFrame.new(part.Position + Vector3.new(0, 3, 0))
+                        end
                     end
+                    break
                 end
             end
-        end
-
-        if not foundChest then
-            Rayfield:Notify({
-                Title = "Teleport Error",
-                Content = "Selected chest not found in workspace.",
-                Duration = 3
-            })
         end
     end,
 })
@@ -1079,10 +967,5 @@ TeleportTab:CreateButton({
     Name = "Refresh Chest List",
     Callback = function()
         ChestDropdown:Refresh(getChestNames())
-        Rayfield:Notify({
-            Title = "Chest List",
-            Content = "Chest list refreshed.",
-            Duration = 2
-        })
     end,
 })
