@@ -12,7 +12,6 @@ local Window = Rayfield:CreateWindow({
     Theme = "Default"
 })
 
--- Print discord link and notify
 print("[ZenoVa - hub] Join our Discord for extra features and more games: https://discord.gg/BnPXzFvbB")
 Rayfield:Notify({
     Title = "ZenoVa - hub",
@@ -27,12 +26,11 @@ local CombatTab = Window:CreateTab("Combat", 4483362458)
 local ESPTab = Window:CreateTab("ESP", 4483362458)
 local TeleportTab = Window:CreateTab("Teleport", "package")
 
-local Label = PlayerTab:CreateLabel("Welcome to ZenoVa - hub", "user")
+PlayerTab:CreateLabel("Welcome to ZenoVa - hub", "user")
 
 local DEFAULT_WALK_SPEED = 16
 local FAST_WALK_SPEED = 50
 local DEFAULT_JUMP_POWER = 50
--- Removed High Jump feature (constant and UI)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -42,7 +40,7 @@ local function getHumanoid()
     return character:WaitForChild("Humanoid", 5)
 end
 
-local function setMaxDays(value: number)
+local function setMaxDays(value)
     local stats = LocalPlayer:FindFirstChild("leaderstats")
     if stats then
         local maxDays = stats:FindFirstChild("Max Days")
@@ -64,7 +62,6 @@ local SpeedToggle = PlayerTab:CreateToggle({
     end
 })
 
--- Removed High Jump toggle
 local SpeedSlider = PlayerTab:CreateSlider({
     Name = "Custom WalkSpeed",
     Range = {16, 100},
@@ -123,7 +120,7 @@ local function getItemNames()
     return list
 end
 
-local function teleportItems(names: {string})
+local function teleportItems(names)
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart", 5)
     if not hrp then return end
@@ -139,18 +136,17 @@ local function teleportItems(names: {string})
     end
 end
 
-local function teleportSingleItem(itemName: string)
+local function teleportSingleItem(itemName)
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart", 5)
     if not hrp then return end
     
-    -- Find first matching item
     for _, mdl in ipairs(ItemsFolder:GetChildren()) do
         if mdl.Name == itemName and mdl:IsA("Model") then
             local main = mdl.PrimaryPart or mdl:FindFirstChildWhichIsA("BasePart")
             if main then
                 mdl:SetPrimaryPartCFrame(hrp.CFrame + Vector3.new(math.random(-5,5), 0, math.random(-5,5)))
-                break -- Only teleport one item
+                break
             end
         end
     end
@@ -169,14 +165,14 @@ local ItemDropdown = ItemTab:CreateDropdown({
     end,
 })
 
-local TeleportBtn = ItemTab:CreateButton({
+ItemTab:CreateButton({
     Name = "Teleport Selected Items",
     Callback = function()
         teleportItems(selectedItems)
     end,
 })
 
-local TeleportSingleBtn = ItemTab:CreateButton({
+ItemTab:CreateButton({
     Name = "Teleport Single Item",
     Callback = function()
         if #selectedItems > 0 then
@@ -185,22 +181,20 @@ local TeleportSingleBtn = ItemTab:CreateButton({
     end,
 })
 
-local TeleportAllBtn = ItemTab:CreateButton({
+ItemTab:CreateButton({
     Name = "Teleport ALL Items",
     Callback = function()
         teleportItems(getItemNames())
     end,
 })
 
--- Item Tab additions
-local RefreshItemsBtn = ItemTab:CreateButton({
+ItemTab:CreateButton({
     Name = "Refresh Item List",
     Callback = function()
         ItemDropdown:Refresh(getItemNames())
     end,
 })
 
--- Missing Kids Tab
 local MissingKidsFolder = (workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("MissingKids")) or workspace:FindFirstChild("MissingKids")
 
 local function getKidNames()
@@ -217,7 +211,7 @@ local function getKidNames()
     return names
 end
 
-local function getKidPosition(name: string): Vector3?
+local function getKidPosition(name)
     if not MissingKidsFolder then return nil end
     if MissingKidsFolder:GetAttribute(name) then
         local v = MissingKidsFolder:GetAttribute(name)
@@ -234,7 +228,6 @@ local function getKidPosition(name: string): Vector3?
     return nil
 end
 
--- ESP handling
 local espParts = {
     players = {},
     kids = {},
@@ -253,7 +246,6 @@ local espEnabled = {
     chests = false
 }
 
--- ESP handling additions for custom ESP
 local customItemESPEnabled = false
 local customCharacterESPEnabled = false
 local selectedCustomItems = {}
@@ -270,8 +262,8 @@ local function clearESP(espType)
     else
         for _, typeTable in pairs(espParts) do
             for _, rec in ipairs(typeTable) do
-        if rec.part and rec.part.Parent then
-            rec.part:Destroy()
+                if rec.part and rec.part.Parent then
+                    rec.part:Destroy()
                 end
             end
             table.clear(typeTable)
@@ -300,28 +292,25 @@ local function createESPAt(name, pos, espType, color, object)
     text.TextColor3 = color or Color3.new(1,1,0)
     text.TextScaled = true
     text.Font = Enum.Font.SourceSansBold
-    text.Text = ""  -- Start with empty text
+    text.Text = ""
     text.Parent = bill
 
     local newESP = {
         part = part, 
         name = name, 
         label = text, 
-        object = object, -- Store reference to the actual object
-        objectId = object and object:GetFullName() -- Store unique identifier for the object
+        object = object,
+        objectId = object and object:GetFullName()
     }
     
     table.insert(espParts[espType], newESP)
     return newESP
 end
 
--- ESP Update Function
 local function updateESP()
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     
-    -- Update Player ESP
     if espEnabled.players then
-        -- Remove ESP for players that no longer exist
         for i = #espParts.players, 1, -1 do
             local rec = espParts.players[i]
             local player = Players:FindFirstChild(rec.name)
@@ -342,7 +331,6 @@ local function updateESP()
             end
         end
         
-        -- Create/update ESP for existing players
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer then
                 local char = player.Character
@@ -370,14 +358,11 @@ local function updateESP()
         end
     end
     
-    -- Update Item ESP
     if espEnabled.items then
-        -- Remove ESP for items that no longer exist
         for i = #espParts.items, 1, -1 do
             local rec = espParts.items[i]
             local object = rec.object
             
-            -- Check if the object still exists
             if not (object and object.Parent) then
                 if rec.part and rec.part.Parent then 
                     rec.part:Destroy() 
@@ -386,7 +371,6 @@ local function updateESP()
             end
         end
         
-        -- Create/update ESP for existing items
         if workspace:FindFirstChild("Items") then
             for _, item in ipairs(workspace.Items:GetChildren()) do
                 if item:IsA("Model") or item:IsA("BasePart") then
@@ -413,14 +397,11 @@ local function updateESP()
         end
     end
     
-    -- Update Enemy ESP
     if espEnabled.enemies then
-        -- Remove ESP for enemies that no longer exist
         for i = #espParts.enemies, 1, -1 do
             local rec = espParts.enemies[i]
             local object = rec.object
             
-            -- Check if the object still exists
             if not (object and object.Parent) then
                 if rec.part and rec.part.Parent then 
                     rec.part:Destroy() 
@@ -429,7 +410,6 @@ local function updateESP()
             end
         end
         
-        -- Create/update ESP for existing enemies
         if workspace:FindFirstChild("Characters") then
             for _, enemy in ipairs(workspace.Characters:GetChildren()) do
                 if enemy:IsA("Model") then
@@ -456,9 +436,7 @@ local function updateESP()
         end
     end
 
-    -- Update Kid ESP
     if espEnabled.kids then
-        -- Remove ESP for kids that no longer exist
         for i = #espParts.kids, 1, -1 do
             local rec = espParts.kids[i]
             local pos = getKidPosition(rec.name)
@@ -476,7 +454,6 @@ local function updateESP()
             end
         end
         
-        -- Create ESP for new kids
         for _, kidName in ipairs(getKidNames()) do
             local found = false
             for _, rec in ipairs(espParts.kids) do
@@ -494,14 +471,11 @@ local function updateESP()
         end
     end
 
-    -- Update Chest ESP
     if espEnabled.chests then
-        -- Remove ESP for chests that no longer exist
         for i = #espParts.chests, 1, -1 do
             local rec = espParts.chests[i]
             local object = rec.object
             
-            -- Check if the object still exists
             if not (object and object.Parent) then
                 if rec.part and rec.part.Parent then 
                     rec.part:Destroy() 
@@ -510,7 +484,6 @@ local function updateESP()
             end
         end
         
-        -- Create/update ESP for existing chests
         if workspace:FindFirstChild("Items") then
             for _, item in ipairs(workspace.Items:GetChildren()) do
                 if (item:IsA("Model") or item:IsA("BasePart")) and item.Name == "Item Chest" then
@@ -537,14 +510,11 @@ local function updateESP()
         end
     end
     
-    -- Custom Item ESP
     if customItemESPEnabled then
-        -- Remove ESP for custom items that no longer exist
         for i = #espParts.custom_items, 1, -1 do
             local rec = espParts.custom_items[i]
             local object = rec.object
             
-            -- Check if the object still exists
             if not (object and object.Parent) then
                 if rec.part and rec.part.Parent then 
                     rec.part:Destroy() 
@@ -553,7 +523,6 @@ local function updateESP()
             end
         end
         
-        -- Create/update ESP for existing custom items
         if workspace:FindFirstChild("Items") then
             for _, item in ipairs(workspace.Items:GetChildren()) do
                 if (item:IsA("Model") or item:IsA("BasePart")) and table.find(selectedCustomItems, item.Name) then
@@ -580,14 +549,11 @@ local function updateESP()
         end
     end
     
-    -- Custom Character ESP
     if customCharacterESPEnabled then
-        -- Remove ESP for custom characters that no longer exist
         for i = #espParts.custom_characters, 1, -1 do
             local rec = espParts.custom_characters[i]
             local object = rec.object
             
-            -- Check if the object still exists
             if not (object and object.Parent) then
                 if rec.part and rec.part.Parent then 
                     rec.part:Destroy() 
@@ -596,7 +562,6 @@ local function updateESP()
             end
         end
         
-        -- Create/update ESP for existing custom characters
         if workspace:FindFirstChild("Characters") then
             for _, char in ipairs(workspace.Characters:GetChildren()) do
                 if char:IsA("Model") and table.find(selectedCustomCharacters, char.Name) then
@@ -624,16 +589,7 @@ local function updateESP()
     end
 end
 
--- Remove the old updateESP function override
-local oldUpdateESP = updateESP
-function updateESP()
-    -- Call the new updateESP function directly
-    oldUpdateESP()
-end
-
--- ESP Tab UI
--- Player ESP
-local PlayerESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Player ESP",
     CurrentValue = false,
     Flag = "PlayerESP",
@@ -643,8 +599,7 @@ local PlayerESPToggle = ESPTab:CreateToggle({
     end,
 })
 
--- Item ESP
-local ItemESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Item ESP",
     CurrentValue = false,
     Flag = "ItemESP",
@@ -654,7 +609,7 @@ local ItemESPToggle = ESPTab:CreateToggle({
     end,
 })
 
-local ChestESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Chest ESP",
     CurrentValue = false,
     Flag = "ChestESP",
@@ -664,8 +619,7 @@ local ChestESPToggle = ESPTab:CreateToggle({
     end,
 })
 
--- Enemy ESP
-local EnemyESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Enemy ESP",
     CurrentValue = false,
     Flag = "EnemyESP",
@@ -675,8 +629,7 @@ local EnemyESPToggle = ESPTab:CreateToggle({
     end,
 })
 
--- Kid ESP
-local KidsESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Kid ESP",
     CurrentValue = false,
     Flag = "KidsESP",
@@ -686,7 +639,6 @@ local KidsESPToggle = ESPTab:CreateToggle({
     end,
 })
 
--- Helper to get all unique item names
 local function getAllUniqueItemNames()
     local seen = {}
     local names = {}
@@ -702,7 +654,6 @@ local function getAllUniqueItemNames()
     return names
 end
 
--- Helper to get all unique character names
 local function getAllUniqueCharacterNames()
     local seen = {}
     local names = {}
@@ -718,7 +669,6 @@ local function getAllUniqueCharacterNames()
     return names
 end
 
--- Custom ESP UI elements
 local CustomItemDropdown = ESPTab:CreateDropdown({
     Name = "Custom Item ESP (Select Items)",
     Options = getAllUniqueItemNames(),
@@ -730,7 +680,7 @@ local CustomItemDropdown = ESPTab:CreateDropdown({
     end,
 })
 
-local CustomItemESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Custom Item ESP",
     CurrentValue = false,
     Flag = "CustomItemESP",
@@ -751,7 +701,7 @@ local CustomCharacterDropdown = ESPTab:CreateDropdown({
     end,
 })
 
-local CustomCharacterESPToggle = ESPTab:CreateToggle({
+ESPTab:CreateToggle({
     Name = "Custom Character ESP",
     CurrentValue = false,
     Flag = "CustomCharacterESP",
@@ -761,8 +711,7 @@ local CustomCharacterESPToggle = ESPTab:CreateToggle({
     end,
 })
 
--- ESP Color Picker
-local ESPColorPicker = ESPTab:CreateColorPicker({
+ESPTab:CreateColorPicker({
     Name = "ESP Color",
     Color = Color3.new(1,1,0),
     Flag = "ESPColor",
@@ -777,7 +726,6 @@ local ESPColorPicker = ESPTab:CreateColorPicker({
     end,
 })
 
--- Start ESP Update Loop
 task.spawn(function()
     while true do
         if espEnabled.players or espEnabled.items or espEnabled.enemies or espEnabled.kids or espEnabled.chests or customItemESPEnabled or customCharacterESPEnabled then
@@ -787,7 +735,6 @@ task.spawn(function()
     end
 end)
 
--- Handle player added/removed for ESP
 Players.PlayerAdded:Connect(function(player)
     if espEnabled.players then
         player.CharacterAdded:Connect(function(char)
@@ -811,9 +758,6 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
--- Add ESP Configuration Options
--- Remove old ESP toggle from Kids tab since it's now in ESP tab
-
 local KidsDropdown = KidsTab:CreateDropdown({
     Name = "Select Kid",
     Options = getKidNames(),
@@ -823,7 +767,7 @@ local KidsDropdown = KidsTab:CreateDropdown({
     Callback = function() end,
 })
 
-local TeleportKidBtn = KidsTab:CreateButton({
+KidsTab:CreateButton({
     Name = "Teleport to Kid",
     Callback = function()
         local option = KidsDropdown.CurrentOption
@@ -839,22 +783,17 @@ local TeleportKidBtn = KidsTab:CreateButton({
     end,
 })
 
-local RefreshKidsBtn = KidsTab:CreateButton({
+KidsTab:CreateButton({
     Name = "Refresh Kid List",
     Callback = function()
         KidsDropdown:Refresh(getKidNames())
     end,
 })
 
--- END NEW ESP TAB SECTION --------------------------------------------------
-
--- Combat Tab and Kill Aura Implementation
--- Variables for Kill Aura
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DamageEvent = ReplicatedStorage.RemoteEvents.ToolDamageObject
 local Characters = workspace.Characters
 
--- Configuration
 local Config = {
     Enabled = false,
     Range = 30,
@@ -863,7 +802,6 @@ local Config = {
     ActiveTargets = {}
 }
 
--- Toggle for KillAura
 CombatTab:CreateToggle({
     Name = "KillAura",
     CurrentValue = false,
@@ -878,7 +816,6 @@ CombatTab:CreateToggle({
     end,
 })
 
--- Slider for Range
 CombatTab:CreateSlider({
     Name = "Range",
     Range = {1, 100},
@@ -891,7 +828,6 @@ CombatTab:CreateSlider({
     end,
 })
 
--- Slider for Attack Speed
 CombatTab:CreateSlider({
     Name = "Attack Speed",
     Range = {0.05, 1},
@@ -904,14 +840,11 @@ CombatTab:CreateSlider({
     end,
 })
 
--- Optimized target validation
 local function isValidTarget(character)
     return character and character:IsA("Model")
 end
 
--- Optimized damage function
 local function DamageTarget(target)
-    -- List of weapons to try in order of preference
     local weapons = {
         "Morningstar",
         "Good Axe",
@@ -919,7 +852,6 @@ local function DamageTarget(target)
         "Old Axe"
     }
     
-    -- Try each weapon in order
     local weaponToUse = nil
     for _, weapon in ipairs(weapons) do
         if LocalPlayer.Inventory:FindFirstChild(weapon) then
@@ -928,7 +860,6 @@ local function DamageTarget(target)
         end
     end
     
-    -- If no weapon found, return
     if not weaponToUse then return end
     
     Config.CurrentAmount = Config.CurrentAmount + 1
@@ -940,7 +871,6 @@ local function DamageTarget(target)
     )
 end
 
--- Optimized attack loop
 local function AttackLoop(target)
     if not Config.ActiveTargets[target] then
         Config.ActiveTargets[target] = true
@@ -953,7 +883,6 @@ local function AttackLoop(target)
     end
 end
 
--- Main KillAura function
 function StartKillAura()
     task.spawn(function()
         while Config.Enabled do
@@ -973,10 +902,9 @@ function StartKillAura()
             end
             task.wait(0.1)
         end
-    end)
+    end
 end
 
--- CharacterAdded handling
 LocalPlayer.CharacterAdded:Connect(function(char)
     local humanoid = char:WaitForChild("Humanoid")
     humanoid.WalkSpeed = SpeedToggle.CurrentValue and FAST_WALK_SPEED or DEFAULT_WALK_SPEED
