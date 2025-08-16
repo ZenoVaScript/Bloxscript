@@ -37,10 +37,10 @@ local PlayerTab = Window:CreateTab("Player")
 local EspTab = Window:CreateTab("Esp")
 local DiscordTab = Window:CreateTab("Discord")
 local SettingsTab = Window:CreateTab("Settings")
-local KillerTab = Window:CreateTab("Killer") -- New tab for Backstab features
+local KillerTab = Window:CreateTab("Killer")
 
 -- Variables
-local ActiveSpeedBoost,ActiveAutoUseCoinFlip,ActiveEspSurvivors,ActiveNoStun,ActiveEspKillers,ActiveEspGenerator,ActiveEspItems,ActiveInfiniteStamina,ActiveEspRagdolls,ActiveAutoGenerator,AutoKillSurvivors,RemoveLags = false,false,false,false,false,false,false,false,false,false,false
+local ActiveSpeedBoost,ActiveAutoUseCoinFlip,ActiveEspSurvivors,ActiveNoStun,ActiveEspKillers,ActiveEspGenerator,ActiveEspItems,ActiveInfiniteStamina,ActiveEspRagdolls,ActiveAutoGenerator,AutoKillSurvivors,RemoveLags = false,false,false,false,false,false,false,false,false,false,false,false
 
 -- Backstab Variables
 local enabled = false
@@ -313,7 +313,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Original UI Elements (from code 2)
+-- Original UI Elements
 local ParagraphInfoServer = InfoTab:CreateParagraph({Title = "Info", Content = "Loading"})
 Rayfield:Notify({
    Title = "Cheat Version",
@@ -377,21 +377,24 @@ local EspSurvivorsToggle = EspTab:CreateToggle({
    CurrentValue = false,
    Flag = "EspSurvivors",
    Callback = function(Value)
-      ActiveEspSurvivors = Value task.spawn(function()
-        while ActiveEspSurvivors do task.spawn(function()
+      ActiveEspSurvivors = Value 
+      task.spawn(function()
+        while ActiveEspSurvivors do 
             for _,Players in pairs(workspace.Players.Survivors:GetChildren()) do 
-                if Players:IsA("Model") and Players:FindFirstChild("Head") and not Players:FindFirstChildOfClass("Highlight") and not Players.Head:FindFirstChildOfClass("BillboardGui") then
-                    CreateEsp(Players,Color3.fromRGB(0,255,0),Players.Name.." ("..Players:GetAttribute("Username")..")",Players.Head,2)
+                if Players:IsA("Model") and Players:FindFirstChild("Head") then
+                    if Value then
+                        if not Players:FindFirstChildOfClass("Highlight") and not Players.Head:FindFirstChildOfClass("BillboardGui") then
+                            CreateEsp(Players,Color3.fromRGB(0,255,0),Players.Name.." ("..(Players:GetAttribute("Username") or "Unknown")..")",Players.Head,2)
+                        end
+                    else
+                        if Players:FindFirstChildOfClass("Highlight") and Players.Head:FindFirstChildOfClass("BillboardGui") then
+                            KeepEsp(Players,Players.Head)
+                        end
+                    end
                 end
             end
-        end)
-        task.wait(0.1)
-        end 
-        for _,Players in pairs(workspace.Players.Survivors:GetChildren()) do 
-            if Players:IsA("Model") and Players:FindFirstChild("Head") and Players:FindFirstChildOfClass("Highlight") and Players.Head:FindFirstChildOfClass("BillboardGui") then
-                KeepEsp(Players,Players.Head)
-            end
-        end 
+            task.wait(0.1)
+        end
       end)
    end,
 })
@@ -401,24 +404,27 @@ local EspKillersToggle = EspTab:CreateToggle({
    CurrentValue = false,
    Flag = "EspKiller",
    Callback = function(Value)
-      ActiveEspKillers = Value task.spawn(function()
-        while ActiveEspKillers do task.spawn(function()
+      ActiveEspKillers = Value 
+      task.spawn(function()
+        while ActiveEspKillers do 
             for _,Players in pairs(workspace.Players.Killers:GetChildren()) do 
-                if Players:IsA("Model") and (Players.Name == "1x1x1x1" or Players.Name == "Jason" or Players.Name == "John Doe") and Players:FindFirstChild("Head") and Players:FindFirstChildOfClass("Highlight") and not Players.Head:FindFirstChildOfClass("BillboardGui") then
-                    Players:FindFirstChildOfClass("Highlight"):Destroy()
-                end
-                if Players:IsA("Model") and Players:FindFirstChild("Head") and not Players:FindFirstChildOfClass("Highlight") and not Players.Head:FindFirstChildOfClass("BillboardGui") then
-                    CreateEsp(Players,Color3.fromRGB(255,0,0),Players.Name.." ("..Players:GetAttribute("Username")..")",Players.Head,2)
+                if Players:IsA("Model") and Players:FindFirstChild("Head") then
+                    if Value then
+                        if Players:FindFirstChildOfClass("Highlight") then
+                            Players:FindFirstChildOfClass("Highlight"):Destroy()
+                        end
+                        if not Players:FindFirstChildOfClass("Highlight") and not Players.Head:FindFirstChildOfClass("BillboardGui") then
+                            CreateEsp(Players,Color3.fromRGB(255,0,0),Players.Name.." ("..(Players:GetAttribute("Username") or "Unknown")..")",Players.Head,2)
+                        end
+                    else
+                        if Players:FindFirstChildOfClass("Highlight") and Players.Head:FindFirstChildOfClass("BillboardGui") then
+                            KeepEsp(Players,Players.Head)
+                        end
+                    end
                 end
             end
-        end)
-        task.wait(0.1)
-        end 
-        for _,Players in pairs(workspace.Players.Killers:GetChildren()) do 
-            if Players:IsA("Model") and Players:FindFirstChild("Head") and Players:FindFirstChildOfClass("Highlight") and Players.Head:FindFirstChildOfClass("BillboardGui") then
-                KeepEsp(Players,Players.Head)
-            end
-        end 
+            task.wait(0.1)
+        end
       end)
    end,
 })
@@ -428,23 +434,25 @@ local EspGeneratorToggle = EspTab:CreateToggle({
    CurrentValue = false,
    Flag = "EspGenerator",
    Callback = function(Value)
-      ActiveEspGenerator= Value task.spawn(function()
+      ActiveEspGenerator = Value 
+      task.spawn(function()
         while ActiveEspGenerator do
             if workspace.Map.Ingame:FindFirstChild("Map") then
                 for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
-                    if Players:IsA("Model") and Players.PrimaryPart and Players.name == "Generator" and not Players:FindFirstChildOfClass("Highlight") and not Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
-                        CreateEsp(Players,Color3.fromRGB(255,255,0),"Generator",Players.PrimaryPart,-2)
+                    if Players:IsA("Model") and Players.PrimaryPart and Players.name == "Generator" then
+                        if Value then
+                            if not Players:FindFirstChildOfClass("Highlight") and not Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
+                                CreateEsp(Players,Color3.fromRGB(255,255,0),"Generator",Players.PrimaryPart,-2)
+                            end
+                        else
+                            if Players:FindFirstChildOfClass("Highlight") and Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
+                                KeepEsp(Players,Players.PrimaryPart)
+                            end
+                        end
                     end
                 end
             end
             task.wait(0.1) 
-        end
-        if workspace.Map.Ingame:FindFirstChild("Map") then
-            for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
-                if Players:IsA("Model") and Players.PrimaryPart and Players.name == "Generator" and Players:FindFirstChildOfClass("Highlight") and Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
-                    KeepEsp(Players)
-                end
-            end
         end
       end)
    end,
@@ -459,30 +467,34 @@ local EspItemsToggle = EspTab:CreateToggle({
       task.spawn(function()
         while ActiveEspItems do
             for _,Players in pairs(workspace.Map.Ingame:GetChildren()) do 
-                if Players:IsA("Tool") and Players:FindFirstChild("ItemRoot") and not Players:FindFirstChildOfClass("Highlight") and not Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
-                    CreateEsp(Players,Color3.fromRGB(0,0,255),Players.Name,Players:FindFirstChild("ItemRoot"),1)
+                if Players:IsA("Tool") and Players:FindFirstChild("ItemRoot") then
+                    if Value then
+                        if not Players:FindFirstChildOfClass("Highlight") and not Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
+                            CreateEsp(Players,Color3.fromRGB(0,0,255),Players.Name,Players:FindFirstChild("ItemRoot"),1)
+                        end
+                    else
+                        if Players:FindFirstChildOfClass("Highlight") and Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
+                            KeepEsp(Players,Players:FindFirstChild("ItemRoot"))
+                        end
+                    end
                 end
             end
             if workspace.Map.Ingame:FindFirstChild("Map") then
                 for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
-                    if Players:IsA("Tool") and Players:FindFirstChild("ItemRoot") and not Players:FindFirstChildOfClass("Highlight") and not Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
-                        CreateEsp(Players,Color3.fromRGB(0,0,255),Players.Name,Players:FindFirstChild("ItemRoot"),1)
+                    if Players:IsA("Tool") and Players:FindFirstChild("ItemRoot") then
+                        if Value then
+                            if not Players:FindFirstChildOfClass("Highlight") and not Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
+                                CreateEsp(Players,Color3.fromRGB(0,0,255),Players.Name,Players:FindFirstChild("ItemRoot"),1)
+                            end
+                        else
+                            if Players:FindFirstChildOfClass("Highlight") and Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
+                                KeepEsp(Players,Players:FindFirstChild("ItemRoot"))
+                            end
+                        end
                     end
                 end
             end
             task.wait(0.1) 
-        end
-        for _,Players in pairs(workspace.Map.Ingame:GetChildren()) do 
-            if Players:IsA("Tool") and Players:FindFirstChild("ItemRoot") and Players:FindFirstChildOfClass("Highlight") and Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
-                KeepEsp(Players,Players:FindFirstChild("ItemRoot"))
-            end
-        end
-        if workspace.Map.Ingame:FindFirstChild("Map") then
-            for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
-                if Players:IsA("Tool") and Players:FindFirstChild("ItemRoot") and Players:FindFirstChildOfClass("Highlight") and Players:FindFirstChild("ItemRoot"):FindFirstChildOfClass("BillboardGui") then
-                    KeepEsp(Players,Players:FindFirstChild("ItemRoot")) 
-                end
-            end
         end
       end)
    end,
@@ -497,7 +509,6 @@ local PlayerSpeedSlider = PlayerTab:CreateSlider({
    CurrentValue = 16,
    Flag = "Slider1",
    Callback = function(Value)
-      CurrentValue = Value
       ValueSpeed = Value
    end,
 })
@@ -510,12 +521,20 @@ local PlayerActiveModifyingSpeedToggle = PlayerTab:CreateToggle({
       ActiveSpeedBoost = Value 
       task.spawn(function()
         while ActiveSpeedBoost do 
-            task.spawn(function()
-                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = ValueSpeed 
-                game.Players.LocalPlayer.Character.Humanoid:SetAttribute("BaseSpeed",ValueSpeed)
-            end)
+            if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+                lp.Character.Humanoid.WalkSpeed = ValueSpeed 
+                if lp.Character.Humanoid:GetAttribute("BaseSpeed") then
+                    lp.Character.Humanoid:SetAttribute("BaseSpeed",ValueSpeed)
+                end
+            end
             task.wait(0.1)
         end 
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid.WalkSpeed = 16
+            if lp.Character.Humanoid:GetAttribute("BaseSpeed") then
+                lp.Character.Humanoid:SetAttribute("BaseSpeed",16)
+            end
+        end
       end)
    end,
 })
@@ -540,17 +559,17 @@ local PlayerActiveAutoGeneratorToggle = PlayerTab:CreateToggle({
    CurrentValue = false,
    Flag = "ButtonAutoGen",
    Callback = function(Value)
-      ActiveAutoGenerator = Value task.spawn(function()
-        while ActiveAutoGenerator do task.spawn(function()
-            for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
-                if Players:IsA("Model") and Players.name == "Generator" then 
-                    if Players:FindFirstChild("Remotes"):FindFirstChild("RE") then 
-                        Players:FindFirstChild("Remotes"):FindFirstChild("RE"):FireServer() 
+      ActiveAutoGenerator = Value 
+      task.spawn(function()
+        while ActiveAutoGenerator do 
+            if workspace.Map.Ingame:FindFirstChild("Map") then
+                for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
+                    if Players:IsA("Model") and Players.name == "Generator" and Players:FindFirstChild("Remotes") and Players.Remotes:FindFirstChild("RE") then 
+                        Players.Remotes.RE:FireServer() 
                     end
-                end
-            end 
-        end)
-        task.wait(2.5)
+                end 
+            end
+            task.wait(2.5)
         end 
       end)
    end,
@@ -561,20 +580,29 @@ local PlayerActiveInfStaminaToggle = PlayerTab:CreateToggle({
    CurrentValue = false,
    Flag = "ButtonInfiniteStamina",
    Callback = function(Value)
-      ActiveInfiniteStamina = Value task.spawn(function()
+      ActiveInfiniteStamina = Value 
+      task.spawn(function()
         while ActiveInfiniteStamina do 
-            task.spawn(function()
-                local m = require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
-                m.StaminaLossDisabled = true 
-                m.Stamina = 9999999
-            end)
+            if game.ReplicatedStorage and game.ReplicatedStorage:FindFirstChild("Systems") and game.ReplicatedStorage.Systems:FindFirstChild("Character") then
+                local success, m = pcall(function()
+                    return require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
+                end)
+                if success and m then
+                    m.StaminaLossDisabled = true 
+                    m.Stamina = 9999999
+                end
+            end
             task.wait(0.1)
         end 
-        task.spawn(function()
-            local m = require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
-            m.StaminaLossDisabled = false 
-            m.Stamina = 100
-        end)
+        if game.ReplicatedStorage and game.ReplicatedStorage:FindFirstChild("Systems") and game.ReplicatedStorage.Systems:FindFirstChild("Character") then
+            local success, m = pcall(function()
+                return require(game.ReplicatedStorage.Systems.Character.Game.Sprinting)
+            end)
+            if success and m then
+                m.StaminaLossDisabled = false 
+                m.Stamina = 100
+            end
+        end
       end)
    end,
 })
@@ -584,11 +612,13 @@ local PlayerNoStunToggle = PlayerTab:CreateToggle({
    CurrentValue = false,
    Flag = "NoStunButton",
    Callback = function(Value)
-      ActiveNoStun = Value task.spawn(function()
-        while ActiveNoStun do task.spawn(function()
-            game.Players.LocalPlayer.Character.HumanoidRootPart.Anchored = false
-        end)
-        task.wait(0.001)
+      ActiveNoStun = Value 
+      task.spawn(function()
+        while ActiveNoStun do 
+            if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                lp.Character.HumanoidRootPart.Anchored = false
+            end
+            task.wait(0.001)
         end 
       end)
    end,
@@ -599,13 +629,13 @@ local PlayerAutoUseCoinFlipToggle = PlayerTab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoUseCoinFlipbutton",
    Callback = function(Value)
-      ActiveAutoUseCoinFlip = Value task.spawn(function()
-        while ActiveAutoUseCoinFlip do task.spawn(function()
-            local ReplicatedStorage = game:GetService("ReplicatedStorage")
-            local RemoteEvent = ReplicatedStorage.Modules.Network.RemoteEvent
-            RemoteEvent:FireServer("UseActorAbility", "CoinFlip")
-        end)
-        task.wait(1)
+      ActiveAutoUseCoinFlip = Value 
+      task.spawn(function()
+        while ActiveAutoUseCoinFlip do 
+            if ReplicatedStorage and ReplicatedStorage:FindFirstChild("Modules") and ReplicatedStorage.Modules:FindFirstChild("Network") and ReplicatedStorage.Modules.Network:FindFirstChild("RemoteEvent") then
+                ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "CoinFlip")
+            end
+            task.wait(1)
         end 
       end)
    end,
@@ -616,18 +646,17 @@ local PlayerActiveAutoKillSurvivorsToggle = PlayerTab:CreateToggle({
    CurrentValue = false,
    Flag = "ButtonAutoKillSurvivors",
    Callback = function(Value)
-      ActiveAutoKillSurvivors = Value task.spawn(function()
-        while ActiveAutoKillSurvivors do 
-            task.spawn(function()
+      AutoKillSurvivors = Value 
+      task.spawn(function()
+        while AutoKillSurvivors do 
+            if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and ReplicatedStorage and ReplicatedStorage:FindFirstChild("Modules") and ReplicatedStorage.Modules:FindFirstChild("Network") and ReplicatedStorage.Modules.Network:FindFirstChild("RemoteEvent") then
                 for _,Players in pairs(workspace.Players.Survivors:GetChildren()) do 
-                    if Players:IsA("Model") then
-                        game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame = Players.HumanoidRootPart.CFrame
-                        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-                        local RemoteEvent = ReplicatedStorage.Modules.Network.RemoteEvent
-                        RemoteEvent:FireServer("UseActorAbility", "Slash")
+                    if Players:IsA("Model") and Players:FindFirstChild("HumanoidRootPart") then
+                        lp.Character.HumanoidRootPart.CFrame = Players.HumanoidRootPart.CFrame
+                        ReplicatedStorage.Modules.Network.RemoteEvent:FireServer("UseActorAbility", "Slash")
                     end
                 end
-            end)
+            end
             task.wait(0.05)
         end 
       end)
@@ -641,41 +670,37 @@ local DropdownTpGen = PlayerTab:CreateDropdown({
    MultipleOptions = false,
    Flag = nil,
    Callback = function(Options)   
-      task.spawn(function()
+      if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") and workspace.Map.Ingame:FindFirstChild("Map") then
         for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
-            if Players:IsA("Model") and Players.name == "Generator" then 
-                if Players:FindFirstChild("GeneratorTP") then 
-                    if Players:FindFirstChild("GeneratorTP").Value == Options[1] then 
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Players.PrimaryPart.CFrame + Vector3.new(0,5,0)
-                    end  
-                end 
-            end
+            if Players:IsA("Model") and Players.name == "Generator" and Players:FindFirstChild("GeneratorTP") then 
+                if Players.GeneratorTP.Value == Options[1] then 
+                    lp.Character.HumanoidRootPart.CFrame = Players.PrimaryPart.CFrame + Vector3.new(0,5,0)
+                end  
+            end 
         end  
-      end)
+      end
    end,
 })
 
 local PlayerRefreshGenButton = PlayerTab:CreateButton({
    Name = "Refresh Dropdown Generator",
-   Callback = function(Value) 
+   Callback = function() 
       local num = 1
-      task.spawn(function() 
-        local GenTable = {} 
+      local GenTable = {} 
+      if workspace.Map.Ingame:FindFirstChild("Map") then
         for _,Players in pairs(workspace.Map.Ingame:FindFirstChild("Map"):GetChildren()) do 
             if Players:IsA("Model") and Players.name == "Generator" then 
                 table.insert(GenTable,"Generator ".. num) 
                 if not Players:FindFirstChild("GeneratorTP") then 
-                    task.spawn(function() 
-                        local NewValue = Instance.new("StringValue",Players) 
-                        NewValue.Name = "GeneratorTP" 
-                        NewValue.Value = "Generator "..num 
-                    end) 
+                    local NewValue = Instance.new("StringValue",Players) 
+                    NewValue.Name = "GeneratorTP" 
+                    NewValue.Value = "Generator "..num 
                 end 
                 num = num +1
             end
         end 
         DropdownTpGen:Refresh(GenTable)
-      end)
+      end
    end,
 })
 
@@ -684,27 +709,34 @@ local EspRagdollsToggle = EspTab:CreateToggle({
    CurrentValue = false,
    Flag = "EspRagdolls", 
    Callback = function(Value)
-      ActiveEspRagdolls = Value task.spawn(function()
-        while ActiveEspRagdolls do task.spawn(function()
+      ActiveEspRagdolls = Value 
+      task.spawn(function()
+        while ActiveEspRagdolls do 
             for _,Players in pairs(workspace.Ragdolls:GetChildren()) do 
-                if Players:IsA("Model") and Players.PrimaryPart and not Players:FindFirstChildOfClass("Highlight") and not Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
-                    CreateEsp(Players,Color3.fromRGB(47,47,47),Players.Name,Players.PrimaryPart,-1)
+                if Players:IsA("Model") and Players.PrimaryPart then
+                    if Value then
+                        if not Players:FindFirstChildOfClass("Highlight") and not Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
+                            CreateEsp(Players,Color3.fromRGB(47,47,47),Players.Name,Players.PrimaryPart,-1)
+                        end
+                    else
+                        if Players:FindFirstChildOfClass("Highlight") and Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
+                            KeepEsp(Players,Players.PrimaryPart)
+                        end
+                    end
                 end
             end
-        end)
-        task.wait(0.1)
-        end 
-        for _,Players in pairs(workspace.Ragdolls:GetChildren()) do 
-            if Players:IsA("Model") and Players.PrimaryPart and Players:FindFirstChildOfClass("Highlight") and Players.PrimaryPart:FindFirstChildOfClass("BillboardGui") then
-                KeepEsp(Players,Players.PrimaryPart)
-            end
-        end 
+            task.wait(0.1)
+        end
       end)
    end,
 })
 
 local ValueFieldOfView = 80
-local OldFOV = game.Players.LocalPlayer.PlayerData.Settings.Game.FieldOfView.Value
+local OldFOV = 80
+if lp and lp:FindFirstChild("PlayerData") and lp.PlayerData:FindFirstChild("Settings") and lp.PlayerData.Settings:FindFirstChild("Game") and lp.PlayerData.Settings.Game:FindFirstChild("FieldOfView") then
+    OldFOV = lp.PlayerData.Settings.Game.FieldOfView.Value
+end
+
 local PlayerFieldOfViewSlider = PlayerTab:CreateSlider({
    Name = "Field Of View",
    Range = {80, 120},
@@ -713,7 +745,6 @@ local PlayerFieldOfViewSlider = PlayerTab:CreateSlider({
    CurrentValue = 80,
    Flag = "FOV1",
    Callback = function(Value)
-      CurrentValue = Value
       ValueFieldOfView = Value
    end,
 })
@@ -725,10 +756,12 @@ local PlayerActiveModifyingFOVToggle = PlayerTab:CreateToggle({
    Flag = "ButtonFOV", 
    Callback = function(Value)
       ActiveModifiedFieldOfView = Value 
-      if ActiveModifiedFieldOfView then
-          game.Players.LocalPlayer.PlayerData.Settings.Game.FieldOfView.Value = ValueFieldOfView 
-      else
-          game.Players.LocalPlayer.PlayerData.Settings.Game.FieldOfView.Value = OldFOV 
+      if lp and lp:FindFirstChild("PlayerData") and lp.PlayerData:FindFirstChild("Settings") and lp.PlayerData.Settings:FindFirstChild("Game") and lp.PlayerData.Settings.Game:FindFirstChild("FieldOfView") then
+          if ActiveModifiedFieldOfView then
+              lp.PlayerData.Settings.Game.FieldOfView.Value = ValueFieldOfView 
+          else
+              lp.PlayerData.Settings.Game.FieldOfView.Value = OldFOV 
+          end
       end
    end,
 })
@@ -746,8 +779,12 @@ local PlayerFullBright = PlayerTab:CreateToggle({
                 game.Lighting.Brightness = 5
                 game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
             end  
-            wait(0.1) 
+            task.wait(0.1) 
         end 
+        if game.Lighting then
+            game.Lighting.Brightness = 1
+            game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+        end
       end)
    end,  
 })
@@ -774,10 +811,10 @@ local PlayerRemoveLag = PlayerTab:CreateToggle({
                     end
                 end
             end
-            wait(0.1) 
+            task.wait(0.1) 
         end 
         for _, asset in pairs(workspace:GetDescendants()) do
-            if asset:IsA("Part") or asset:IsA("MeshPart")) then
+            if (asset:IsA("Part") or asset:IsA("MeshPart")) then
                 local oldMatName = asset:GetAttribute("OldMaterial")
                 if oldMatName then
                     for _, enumItem in ipairs(Enum.Material:GetEnumItems()) do
@@ -821,7 +858,8 @@ local Themes = {
 local Dropdown = SettingsTab:CreateDropdown({
    Name = "Change Theme",
    Options = {"Default", "Amber Glow", "Amethyst", "Bloom", "Dark Blue", "Green", "Light", "Ocean", "Serenity"},
-   CurrentOption = selectedTheme,
+   CurrentOption = {selectedTheme},
+   MultipleOptions = false,
    Flag = "ThemeSelection",
    Callback = function(Selected)
       local ident = Themes[Selected[1]]
@@ -834,20 +872,18 @@ Rayfield:LoadConfiguration()
 task.spawn(function()
     while true do
         task.wait(1) 
-        task.spawn(function()
-            local updatedInfo = getServerInfo()
-            local updatedContent = string.format(
-                "📌 PlaceId: %s\n🔑 JobId: %s\n🧪 IsStudio: %s\n👥 Players: %d/%d",
-                updatedInfo.PlaceId,
-                updatedInfo.JobId,
-                tostring(updatedInfo.IsStudio),
-                updatedInfo.CurrentPlayers,
-                updatedInfo.MaxPlayers
-            )
-            ParagraphInfoServer:Set({
-                Title = "Info",
-                Content = updatedContent
-            })
-        end)
+        local updatedInfo = getServerInfo()
+        local updatedContent = string.format(
+            "📌 PlaceId: %s\n🔑 JobId: %s\n🧪 IsStudio: %s\n👥 Players: %d/%d",
+            updatedInfo.PlaceId,
+            updatedInfo.JobId,
+            tostring(updatedInfo.IsStudio),
+            updatedInfo.CurrentPlayers,
+            updatedInfo.MaxPlayers
+        )
+        ParagraphInfoServer:Set({
+            Title = "Info",
+            Content = updatedContent
+        })
     end
 end)
