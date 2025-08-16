@@ -1,10 +1,10 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local selectedTheme = "Default"
 local Window = Rayfield:CreateWindow({
-   Name = "Forsaken - Script By Iliankytb",
+   Name = "ZenoVa - Forsaken Script",
    Icon = 0,
    LoadingTitle = "Forsaken",
-   LoadingSubtitle = "Script By Iliankytb",
+   LoadingSubtitle = "Script by ZenoID",
    Theme = selectedTheme,
    DisableRayfieldPrompts = false,
    DisableBuildWarnings = false,
@@ -37,7 +37,7 @@ local PlayerTab = Window:CreateTab("Player")
 local EspTab = Window:CreateTab("Esp")
 local DiscordTab = Window:CreateTab("Discord")
 local SettingsTab = Window:CreateTab("Settings")
-local KillerTab = Window:CreateTab("Killer")
+local KillerTab = Window:CreateTab("BackStab v2")
 
 -- Variables
 local ActiveSpeedBoost,ActiveAutoUseCoinFlip,ActiveEspSurvivors,ActiveNoStun,ActiveEspKillers,ActiveEspGenerator,ActiveEspItems,ActiveInfiniteStamina,ActiveEspRagdolls,ActiveAutoGenerator,AutoKillSurvivors,RemoveLags = false,false,false,false,false,false,false,false,false,false,false,false
@@ -339,7 +339,7 @@ end
 
 local Paragraph1 = UpdateTab:CreateParagraph({Title = "TP To Gen", Content = "This Function Work Now And If You Got Kicked I Guess Sorry!"})
 local Paragraph2 = UpdateTab:CreateParagraph({Title = "Fixed Full Bright(V.0.23)", Content = "Normally Full Bright Is Fixed Try It!"})
-local Paragraph3 = UpdateTab:CreateParagraph({Title = "Fixed Items(V.0.24)", Content = "Just Fixed Now!"})
+local Paragraph3 = UpdateTab:CreateParagraph({Title = "BackStab v2", Content = "I have added the backstab feature!!"})
 
 local function CreateEsp(Char,Color,Text,Parent,number)
     if Char and not Char:FindFirstChildOfClass("Highlight") and not Parent:FindFirstChildOfClass("BillboardGui") then
